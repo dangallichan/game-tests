@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <!-- the original game was created using a very short conversation with Google Gemini! -->
-  <!-- tablet version (touch controls, responsive layout, restyle): code generated for D. Gallichan by Claude, date: 13/11/26 (circular boundary + slower speeds added same day) -->
+  <!-- tablet version (touch controls, responsive layout, restyle): code generated for D. Gallichan by Claude, date: 13/11/26 (circular boundary, slower speeds and sounds added same day) -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -353,6 +353,12 @@ CAKE</textarea>
       </label>
 
       <label class="switch-row">
+        <span>Sounds</span>
+        <input type="checkbox" id="soundToggle" checked>
+        <span class="switch"></span>
+      </label>
+
+      <label class="switch-row">
         <span>Show arrow buttons</span>
         <input type="checkbox" id="padToggle" checked>
         <span class="switch"></span>
@@ -374,7 +380,7 @@ CAKE</textarea>
       const lettersEl = $('letters'), wordCountEl = $('wordCount'), scoreEl = $('score');
       const sheetWrap = $('sheetWrap'), wordInput = $('wordInput'), doneBtn = $('doneBtn');
       const gridSizeInput = $('gridSizeInput'), gridSizeValue = $('gridSizeValue');
-      const speedInput = $('speedInput'), speedValue = $('speedValue'), padToggle = $('padToggle'), wrapToggle = $('wrapToggle');
+      const speedInput = $('speedInput'), speedValue = $('speedValue'), padToggle = $('padToggle'), wrapToggle = $('wrapToggle'), soundToggle = $('soundToggle');
 
       // --- Game state ---
       // state: 'empty' (no words) | 'waiting' (board ready) | 'running' | 'paused' | 'over'
@@ -403,6 +409,56 @@ CAKE</textarea>
 
       let appliedWords = '';   // settings the current game was started with
       let appliedGrid = 0;
+
+      // --- Sounds: short soft tones made with Web Audio (no audio files needed) ---
+      let audio = null, master = null;
+      function unlockAudio() {
+        // Browsers only allow sound after a touch or key press, so this runs on the first one
+        if (!soundToggle.checked) return;
+        try {
+          if (!audio) {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return;
+            audio = new AC();
+            master = audio.createGain();
+            master.gain.value = 0.5;
+            master.connect(audio.destination);
+          }
+          if (audio.state === 'suspended') audio.resume();
+        } catch (e) { audio = null; }
+      }
+      window.addEventListener('pointerdown', unlockAudio, true);
+      window.addEventListener('keydown', unlockAudio, true);
+
+      // One soft note: quick fade in, gentle fade out, optional pitch slide
+      function note(freq, delay, dur, vol, slideTo, type) {
+        if (!audio || !soundToggle.checked) return;
+        try {
+          const t = audio.currentTime + delay;
+          const osc = audio.createOscillator(), g = audio.createGain();
+          osc.type = type || 'sine';
+          osc.frequency.setValueAtTime(freq, t);
+          if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+          osc.connect(g); g.connect(master);
+          osc.start(t); osc.stop(t + dur + 0.03);
+        } catch (e) { /* sound is optional */ }
+      }
+
+      const C5 = 523.25;
+      const semis = n => C5 * Math.pow(2, n / 12);
+      const SCALE = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24]; // pentatonic, so any run of notes sounds pleasant
+      const sfx = {
+        start() { note(semis(7), 0, 0.10, 0.10); note(semis(12), 0.09, 0.14, 0.10); },
+        // "bloop" that climbs one step of the scale with each letter of the word
+        eat(i) { const f = semis(SCALE[i % SCALE.length]); note(f, 0, 0.13, 0.13, f * 1.22, 'triangle'); },
+        wordDone() { [12, 16, 19, 24].forEach((n, i) => note(semis(n), 0.05 + i * 0.07, 0.16, 0.09)); },
+        win() { [0, 4, 7, 12, 16, 19, 24].forEach((n, i) => note(semis(n), 0.05 + i * 0.09, i === 6 ? 0.5 : 0.18, 0.10)); },
+        crash() { note(330, 0, 0.22, 0.13, 165, 'triangle'); note(220, 0.16, 0.34, 0.12, 98, 'triangle'); },
+        wrap() { note(660, 0, 0.09, 0.05, 990); },
+      };
 
       // --- Setup ---
       function readWords() {
@@ -451,6 +507,7 @@ CAKE</textarea>
 
       function beginPlay() {
         if (state !== 'waiting' && state !== 'paused') return;
+        if (state === 'waiting') sfx.start();
         state = 'running';
         hideOverlay();
         updateHud();
@@ -469,6 +526,7 @@ CAKE</textarea>
         stopLoop();
         state = 'over';
         crashed = !won;
+        won ? sfx.win() : sfx.crash();
         updateHud();
         draw();
         showOverlay(title, `Score: <b>${score}</b>`, 'Play again', newGame);
@@ -496,6 +554,7 @@ CAKE</textarea>
             // Circular boundary: come out of the opposite edge
             head.x = (head.x + gridSize) % gridSize;
             head.y = (head.y + gridSize) % gridSize;
+            sfx.wrap();
           } else {
             endGame('Bump! Hit the wall');
             return;
@@ -517,11 +576,13 @@ CAKE</textarea>
             return;
           }
           foods.splice(eaten, 1);
+          sfx.eat(letterIndex);
           letterIndex++;
           score += 10;
 
           if (foods.length === 0) {
             if (wordNumber + 1 < words.length) {
+              sfx.wordDone();
               wordNumber++;
               letters = words[wordNumber];
               letterIndex = 0;
