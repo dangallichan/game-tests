@@ -1,5 +1,5 @@
-https://dangallichan.github.com/game-tests/CircuitRacer.html
+(https://dangallichan.github.io/game-tests/CircuitRacer.html)[https://dangallichan.github.io/game-tests/CircuitRacer.html]
 
-https://dangallichan.github.com/game-tests/StarCircuit.html
+(https://dangallichan.github.io/game-tests/StarCircuit.html)[(https://dangallichan.github.io/game-tests/StarCircuit.html]
 
-https://dangallichan.github.com/game-tests/StarRoad.html
+(https://dangallichan.github.io/game-tests/StarRoad.html)[https://dangallichan.github.io/game-tests/StarRoad.html
