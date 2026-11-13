@@ -3,3 +3,5 @@
 [https://dangallichan.github.io/game-tests/StarCircuit.html](https://dangallichan.github.io/game-tests/StarCircuit.html)
 
 [https://dangallichan.github.io/game-tests/StarRoad.html](https://dangallichan.github.io/game-tests/StarRoad.html)
+
+[https://dangallichan.github.io/game-tests/snakeWordGameTablet.html](https://dangallichan.github.io/game-tests/snakeWordGameTablet.html)
