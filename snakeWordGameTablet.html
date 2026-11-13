@@ -298,7 +298,7 @@
     </section>
 
     <main class="stage" id="stage">
-      <div class="board" id="board">
+      <div class="board wrap" id="board">
         <canvas id="gameCanvas"></canvas>
         <div class="overlay" id="overlay" hidden>
           <div class="overlay-card">
@@ -341,14 +341,14 @@ CAKE</textarea>
       </div>
 
       <div class="field">
-        <label for="speedInput"><span>Speed</span><span class="val" id="speedValue">5</span></label>
-        <input type="range" id="speedInput" min="1" max="12" step="1" value="5">
+        <label for="speedInput"><span>Speed</span><span class="val" id="speedValue">3</span></label>
+        <input type="range" id="speedInput" min="1" max="12" step="1" value="3">
         <small>1 = very slow (good for small grids), 12 = fast.</small>
       </div>
 
       <label class="switch-row">
         <span>Circular boundary<small>The snake goes through an edge and comes out the opposite side instead of crashing.</small></span>
-        <input type="checkbox" id="wrapToggle">
+        <input type="checkbox" id="wrapToggle" checked>
         <span class="switch"></span>
       </label>
 
@@ -824,6 +824,12 @@ CAKE</textarea>
       if (window.ResizeObserver) new ResizeObserver(refit).observe(stage);
       else window.addEventListener('resize', refit);
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => draw());
+
+      // Match the display to the controls' starting values (browsers can restore old form values on reload)
+      board.classList.toggle('wrap', wrapToggle.checked);
+      app.classList.toggle('no-pad', !padToggle.checked);
+      speedValue.textContent = speedInput.value;
+      gridSizeValue.textContent = `${gridSizeInput.value} × ${gridSizeInput.value}`;
 
       newGame();
     });
