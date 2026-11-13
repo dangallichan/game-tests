@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- the original game was created using a very short conversation with Google Gemini! -->
+  <!-- tablet version (touch controls, responsive layout, restyle): code generated for D. Gallichan by Claude, date: 13/11/26 (circular boundary + slower speeds added same day) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#FFF6E3">
+  <title>Snake Word Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #FFF6E3;
+      --card: #FFFDF7;
+      --ink: #2B2A3A;
+      --ink-soft: #6E6A7C;
+      --line: #EADBB8;
+      --grass: #A9D86E;
+      --snake: #4353D8;
+      --coral: #FF6B4A;
+      --coral-deep: #D94C2E;
+      --sun: #FFC93C;
+      --tile: #FFF4D6;
+      --tile-edge: #D2AC62;
+      --done: #59B36B;
+      --btn: clamp(56px, 10vmin, 88px);
+      --gap: clamp(8px, 1.6vmin, 16px);
+      --font: "Fredoka", ui-rounded, "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      overscroll-behavior: none;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--font);
+      -webkit-text-size-adjust: 100%;
+    }
+
+    button { font: inherit; color: inherit; cursor: pointer; border: 0; touch-action: manipulation; }
+
+    /* ---------- App layout ---------- */
+    .app {
+      height: 100vh;
+      height: 100dvh;
+      display: grid;
+      gap: var(--gap);
+      padding: max(var(--gap), env(safe-area-inset-top)) max(var(--gap), env(safe-area-inset-right))
+               max(var(--gap), env(safe-area-inset-bottom)) max(var(--gap), env(safe-area-inset-left));
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      grid-template-areas: "top top" "stage stage" "word pad";
+      align-items: center;
+      touch-action: none;            /* swipes steer the snake instead of scrolling the page */
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    @media (orientation: landscape) {
+      .app {
+        grid-template-columns: minmax(0, 1fr) clamp(230px, 30vw, 340px);
+        grid-template-rows: auto auto minmax(0, 1fr);
+        grid-template-areas: "stage top" "stage word" "stage pad";
+        align-items: stretch;
+      }
+      .pad { align-self: end; }
+      .top { flex-wrap: wrap; }
+      .title { flex-basis: 100%; }
+    }
+
+    .app.no-pad .pad { display: none; }
+    .app.no-pad .word { grid-column: 1 / -1; }
+    @media (orientation: landscape) { .app.no-pad .word { grid-column: auto; } }
+
+    /* ---------- Top bar ---------- */
+    .top { grid-area: top; display: flex; align-items: center; gap: 8px; }
+    .title { margin: 0; font-size: clamp(18px, 3.4vmin, 30px); font-weight: 700; letter-spacing: 0.01em; line-height: 1; margin-right: auto; }
+    .title span { color: var(--coral); }
+
+    .chip-btn {
+      min-height: 46px;
+      padding: 0 14px;
+      white-space: nowrap;
+      border-radius: 999px;
+      background: var(--card);
+      border: 2px solid var(--line);
+      font-weight: 600;
+      font-size: 16px;
+    }
+    .chip-btn:active { transform: translateY(1px); background: #FFF0CC; }
+    .chip-btn:disabled { opacity: 0.45; }
+
+    /* ---------- Word panel ---------- */
+    .word {
+      grid-area: word;
+      background: var(--card);
+      border: 2px solid var(--line);
+      border-radius: 20px;
+      padding: 10px 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .word-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 15px; font-weight: 500; color: var(--ink-soft); }
+    .score { color: var(--ink); font-weight: 600; }
+    .score b { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+    .letters { display: flex; flex-wrap: wrap; gap: 6px; min-height: 44px; }
+    .letters span {
+      min-width: 40px;
+      height: 44px;
+      padding: 0 6px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      background: var(--tile);
+      box-shadow: 0 3px 0 var(--tile-edge);
+      font-size: 26px;
+      font-weight: 600;
+      line-height: 1;
+    }
+    .letters span.done { background: var(--done); box-shadow: 0 3px 0 #3E8A4E; color: #fff; }
+    .letters span.next { background: var(--sun); box-shadow: 0 3px 0 #D79F12; animation: bob 0.9s ease-in-out infinite; }
+    .letters.long span { min-width: 30px; height: 36px; font-size: 20px; }
+    .hint { font-size: 14px; color: var(--ink-soft); }
+
+    @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+    /* ---------- Board ---------- */
+    .stage { grid-area: stage; align-self: stretch; min-width: 0; min-height: 0; display: grid; place-items: center; overflow: hidden; }
+    .board {
+      position: relative;
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow: 0 0 0 4px var(--ink), 0 10px 0 4px rgba(43, 42, 58, 0.18);
+      margin: 4px 4px 14px;
+      background: var(--grass);
+    }
+    canvas { display: block; width: 100%; height: 100%; }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: rgba(43, 42, 58, 0.45);
+    }
+    .overlay[hidden] { display: none; }
+    .overlay-card {
+      max-width: min(92%, 420px);
+      background: var(--card);
+      border-radius: 24px;
+      padding: clamp(16px, 4vmin, 28px);
+      text-align: center;
+      box-shadow: 0 8px 0 rgba(43, 42, 58, 0.25);
+    }
+    .overlay-card h2 { margin: 0 0 6px; font-size: clamp(24px, 5vmin, 38px); font-weight: 700; line-height: 1.1; }
+    .overlay-card p { margin: 0 0 16px; font-size: clamp(16px, 2.6vmin, 20px); color: var(--ink-soft); }
+    .overlay-card p b { color: var(--ink); letter-spacing: 0.06em; }
+
+    .big-btn {
+      min-height: 58px;
+      padding: 0 34px;
+      border-radius: 999px;
+      background: var(--coral);
+      color: #fff;
+      font-size: 22px;
+      font-weight: 600;
+      box-shadow: 0 5px 0 var(--coral-deep);
+    }
+    .big-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--coral-deep); }
+
+    /* ---------- D-pad ---------- */
+    .pad {
+      grid-area: pad;
+      justify-self: center;
+      display: grid;
+      grid-template-columns: repeat(3, var(--btn));
+      grid-template-rows: repeat(3, var(--btn));
+      gap: 8px;
+      padding-bottom: 6px;
+    }
+    .pad button {
+      border-radius: 22%;
+      background: var(--ink);
+      color: var(--paper);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 5px 0 #121120;
+      touch-action: none;
+    }
+    .pad button.on, .pad button:active { transform: translateY(4px); box-shadow: 0 1px 0 #121120; background: var(--snake); }
+    .pad svg { width: 46%; height: 46%; }
+    .pad .up { grid-area: 1 / 2; }
+    .pad .left { grid-area: 2 / 1; }
+    .pad .right { grid-area: 2 / 3; }
+    .pad .down { grid-area: 3 / 2; }
+    .pad .hub { grid-area: 2 / 2; border-radius: 50%; background: var(--line); margin: 28%; }
+
+    /* ---------- Settings sheet ---------- */
+    .sheet-wrap {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: rgba(43, 42, 58, 0.55);
+    }
+    .sheet-wrap[hidden] { display: none; }
+    .sheet {
+      width: min(100%, 540px);
+      max-height: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      background: var(--card);
+      border-radius: 26px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .sheet h2 { margin: 0; font-size: 26px; font-weight: 700; }
+    .field label, .field .label { display: flex; justify-content: space-between; font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+    .field .val { color: var(--coral-deep); font-variant-numeric: tabular-nums; }
+    .field small { display: block; margin-top: 6px; font-size: 14px; color: var(--ink-soft); }
+
+    textarea {
+      width: 100%;
+      height: 150px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 2px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      font: 500 20px/1.35 var(--font);   /* 16px+ stops iOS zooming in on focus */
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      resize: vertical;
+    }
+    textarea:focus { outline: 3px solid var(--sun); border-color: var(--ink); }
+
+    input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 36px; margin: 0; background: transparent; }
+    input[type="range"]::-webkit-slider-runnable-track { height: 12px; border-radius: 6px; background: var(--line); }
+    input[type="range"]::-moz-range-track { height: 12px; border-radius: 6px; background: var(--line); }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 34px; height: 34px; margin-top: -11px;
+      border-radius: 50%; background: var(--coral); border: 4px solid #fff; box-shadow: 0 2px 0 var(--coral-deep), 0 0 0 2px var(--ink);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 28px; height: 28px; border-radius: 50%; background: var(--coral); border: 4px solid #fff; box-shadow: 0 0 0 2px var(--ink);
+    }
+
+    .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 17px; font-weight: 600; }
+    .switch-row input { position: absolute; opacity: 0; }
+    .switch-row small { display: block; margin-top: 4px; font-size: 14px; font-weight: 400; color: var(--ink-soft); }
+    .board.wrap { box-shadow: 0 0 0 4px var(--paper), 0 10px 0 4px rgba(43, 42, 58, 0.18); outline: 4px dashed var(--ink); }
+    .switch { width: 62px; height: 36px; border-radius: 18px; background: var(--line); position: relative; flex: none; transition: background 0.15s; }
+    .switch::after { content: ""; position: absolute; top: 4px; left: 4px; width: 28px; height: 28px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.15s; }
+    .switch-row input:checked + .switch { background: var(--done); }
+    .switch-row input:checked + .switch::after { transform: translateX(26px); }
+    .switch-row input:focus-visible + .switch { outline: 3px solid var(--sun); }
+
+    .sheet .big-btn { align-self: stretch; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .letters span.next { animation: none; }
+      .switch, .switch::after { transition: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app" id="app">
+    <header class="top">
+      <h1 class="title">Snake <span>Word</span> Game</h1>
+      <button class="chip-btn" id="pauseBtn" type="button">Pause</button>
+      <button class="chip-btn" id="settingsBtn" type="button">Settings</button>
+    </header>
+
+    <section class="word" aria-live="polite">
+      <div class="word-head">
+        <span id="wordCount">Word 1 of 1</span>
+        <span class="score">Score <b id="score">0</b></span>
+      </div>
+      <div class="letters" id="letters"></div>
+      <div class="hint">Eat the letters in order. The yellow one is next.</div>
+    </section>
+
+    <main class="stage" id="stage">
+      <div class="board" id="board">
+        <canvas id="gameCanvas"></canvas>
+        <div class="overlay" id="overlay" hidden>
+          <div class="overlay-card">
+            <h2 id="overlayTitle"></h2>
+            <p id="overlaySub"></p>
+            <button class="big-btn" id="overlayBtn" type="button"></button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <nav class="pad" id="pad" aria-label="Direction buttons">
+      <button class="up" data-dir="up" type="button" aria-label="Up"><svg viewBox="0 0 24 24"><path d="M12 4 21 19H3z" fill="currentColor"/></svg></button>
+      <button class="left" data-dir="left" type="button" aria-label="Left"><svg viewBox="0 0 24 24"><path d="M4 12 19 3v18z" fill="currentColor"/></svg></button>
+      <div class="hub"></div>
+      <button class="right" data-dir="right" type="button" aria-label="Right"><svg viewBox="0 0 24 24"><path d="M20 12 5 21V3z" fill="currentColor"/></svg></button>
+      <button class="down" data-dir="down" type="button" aria-label="Down"><svg viewBox="0 0 24 24"><path d="M12 20 3 5h18z" fill="currentColor"/></svg></button>
+    </nav>
+  </div>
+
+  <!-- Settings -->
+  <div class="sheet-wrap" id="sheetWrap" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+      <h2 id="sheetTitle">Settings</h2>
+
+      <div class="field">
+        <label for="wordInput">Words (one per line)</label>
+        <textarea id="wordInput" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="APPLE&#10;BANANA&#10;ORANGE">CAT
+DOG
+FISH
+FROG
+MOON
+CAKE</textarea>
+      </div>
+
+      <div class="field">
+        <label for="gridSizeInput"><span>Grid size</span><span class="val" id="gridSizeValue">12 × 12</span></label>
+        <input type="range" id="gridSizeInput" min="10" max="40" step="1" value="12">
+        <small>Changing the words or the grid size starts a new game.</small>
+      </div>
+
+      <div class="field">
+        <label for="speedInput"><span>Speed</span><span class="val" id="speedValue">5</span></label>
+        <input type="range" id="speedInput" min="1" max="12" step="1" value="5">
+        <small>1 = very slow (good for small grids), 12 = fast.</small>
+      </div>
+
+      <label class="switch-row">
+        <span>Circular boundary<small>The snake goes through an edge and comes out the opposite side instead of crashing.</small></span>
+        <input type="checkbox" id="wrapToggle">
+        <span class="switch"></span>
+      </label>
+
+      <label class="switch-row">
+        <span>Show arrow buttons</span>
+        <input type="checkbox" id="padToggle" checked>
+        <span class="switch"></span>
+      </label>
+
+      <button class="big-btn" id="doneBtn" type="button">Done</button>
+    </div>
+  </div>
+
+  <script>
+    // code generated for D. Gallichan by Claude, date: 13/11/26
+    document.addEventListener('DOMContentLoaded', () => {
+      // --- DOM ---
+      const $ = id => document.getElementById(id);
+      const app = $('app'), stage = $('stage'), board = $('board'), canvas = $('gameCanvas');
+      const ctx = canvas.getContext('2d');
+      const overlay = $('overlay'), overlayTitle = $('overlayTitle'), overlaySub = $('overlaySub'), overlayBtn = $('overlayBtn');
+      const pauseBtn = $('pauseBtn'), settingsBtn = $('settingsBtn');
+      const lettersEl = $('letters'), wordCountEl = $('wordCount'), scoreEl = $('score');
+      const sheetWrap = $('sheetWrap'), wordInput = $('wordInput'), doneBtn = $('doneBtn');
+      const gridSizeInput = $('gridSizeInput'), gridSizeValue = $('gridSizeValue');
+      const speedInput = $('speedInput'), speedValue = $('speedValue'), padToggle = $('padToggle'), wrapToggle = $('wrapToggle');
+
+      // --- Game state ---
+      // state: 'empty' (no words) | 'waiting' (board ready) | 'running' | 'paused' | 'over'
+      let state = 'empty';
+      let words = [];          // each word is an array of letters
+      let wordNumber = 0;      // index of the current word
+      let letters = [];        // letters of the current word
+      let letterIndex = 0;     // next letter to eat
+      let score = 0;
+      let crashed = false;
+      let timer = null;
+
+      // Speed level (1-12) -> milliseconds per game tick.
+      // Levels 3-12 are the original game's levels 1-10; levels 1 and 2 are extra-slow ones for small grids.
+      const SPEED_DELAYS = [600, 420, 300, 250, 200, 160, 130, 100, 80, 65, 50, 35];
+      const tickDelay = () => SPEED_DELAYS[parseInt(speedInput.value, 10) - 1];
+
+      let gridSize = 12;       // tiles per side
+      let tile = 20;           // CSS pixels per tile
+      let snake = [];
+      let foods = [];
+      let direction = 'right';
+      let turnQueue = [];      // buffered turns, so two quick swipes both register
+      const OPPOSITE = { up: 'down', down: 'up', left: 'right', right: 'left' };
+      const VEC = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+
+      let appliedWords = '';   // settings the current game was started with
+      let appliedGrid = 0;
+
+      // --- Setup ---
+      function readWords() {
+        return wordInput.value.split('\n')
+          .map(w => Array.from(w.replace(/\s+/g, '').toLocaleUpperCase()))
+          .filter(w => w.length > 0);
+      }
+
+      function newGame() {
+        stopLoop();
+        appliedWords = wordInput.value;
+        appliedGrid = gridSize = parseInt(gridSizeInput.value, 10);
+        fitBoard();
+
+        words = readWords();
+        wordNumber = 0;
+        letterIndex = 0;
+        score = 0;
+        crashed = false;
+        direction = 'right';
+        turnQueue = [];
+        foods = [];
+        letters = [];
+        snake = [{ x: Math.floor(gridSize / 2), y: Math.floor(gridSize / 2) }];
+
+        if (words.length === 0) {
+          state = 'empty';
+          updateHud();
+          draw();
+          showOverlay('No words yet', 'Add some words to spell in Settings.', 'Add words', openSettings);
+          return;
+        }
+
+        letters = words[0];
+        if (!placeLetters()) { tooLong(); return; }
+        setWaiting();
+      }
+
+      function setWaiting() {
+        state = 'waiting';
+        updateHud();
+        draw();
+        const how = app.classList.contains('no-pad') ? 'Swipe to steer.' : 'Swipe or use the arrows to steer.';
+        showOverlay('Ready?', `Spell <b>${escapeHtml(letters.join(''))}</b>. ${how}`, 'Start', beginPlay);
+      }
+
+      function beginPlay() {
+        if (state !== 'waiting' && state !== 'paused') return;
+        state = 'running';
+        hideOverlay();
+        updateHud();
+        startLoop();
+      }
+
+      function pause() {
+        if (state !== 'running') return;
+        stopLoop();
+        state = 'paused';
+        updateHud();
+        showOverlay('Paused', 'Take a breather.', 'Carry on', beginPlay);
+      }
+
+      function endGame(title, won) {
+        stopLoop();
+        state = 'over';
+        crashed = !won;
+        updateHud();
+        draw();
+        showOverlay(title, `Score: <b>${score}</b>`, 'Play again', newGame);
+      }
+
+      function tooLong() {
+        stopLoop();
+        state = 'over';
+        updateHud();
+        draw();
+        showOverlay('Word too long', `<b>${escapeHtml(letters.join(''))}</b> will not fit on this grid. Try a bigger grid.`, 'Settings', openSettings);
+      }
+
+      function startLoop() { stopLoop(); timer = setInterval(tick, tickDelay()); }
+      function stopLoop() { if (timer) { clearInterval(timer); timer = null; } }
+
+      // --- Game logic (rules unchanged from the original) ---
+      function tick() {
+        if (turnQueue.length) direction = turnQueue.shift();
+
+        const head = { x: snake[0].x + VEC[direction][0], y: snake[0].y + VEC[direction][1] };
+
+        if (head.x < 0 || head.x >= gridSize || head.y < 0 || head.y >= gridSize) {
+          if (wrapToggle.checked) {
+            // Circular boundary: come out of the opposite edge
+            head.x = (head.x + gridSize) % gridSize;
+            head.y = (head.y + gridSize) % gridSize;
+          } else {
+            endGame('Bump! Hit the wall');
+            return;
+          }
+        }
+        for (let i = 1; i < snake.length; i++) {
+          if (head.x === snake[i].x && head.y === snake[i].y) {
+            endGame('Ouch! Bit yourself');
+            return;
+          }
+        }
+
+        snake.unshift(head);
+
+        const eaten = foods.findIndex(f => f.x === head.x && f.y === head.y);
+        if (eaten !== -1) {
+          if (foods[eaten].letter !== letters[letterIndex]) {
+            endGame('Oops! Wrong letter');
+            return;
+          }
+          foods.splice(eaten, 1);
+          letterIndex++;
+          score += 10;
+
+          if (foods.length === 0) {
+            if (wordNumber + 1 < words.length) {
+              wordNumber++;
+              letters = words[wordNumber];
+              letterIndex = 0;
+              if (!placeLetters()) { tooLong(); return; }
+            } else {
+              updateHud();
+              endGame('You spelled them all!', true);
+              return;
+            }
+          }
+        } else {
+          snake.pop();
+        }
+
+        updateHud();
+        draw();
+      }
+
+      // Places all letters of the current word at random, at least one tile away from the walls.
+      // Returns false if the word cannot fit on the current grid.
+      function placeLetters() {
+        foods = [];
+        const interior = Math.max(0, gridSize - 2) ** 2;
+        if (letters.length > interior - snake.length) return false;
+
+        const taken = new Set(snake.map(s => `${s.x},${s.y}`));
+        for (const letter of letters) {
+          let x, y;
+          do {
+            x = Math.floor(Math.random() * (gridSize - 2)) + 1;
+            y = Math.floor(Math.random() * (gridSize - 2)) + 1;
+          } while (taken.has(`${x},${y}`));
+          taken.add(`${x},${y}`);
+          foods.push({ x, y, letter });
+        }
+        return true;
+      }
+
+      // Called by swipes, the arrow buttons and the keyboard
+      function steer(dir) {
+        if (state === 'waiting') {
+          direction = dir;
+          turnQueue = [];
+          beginPlay();
+          return;
+        }
+        if (state !== 'running') return;
+        const last = turnQueue.length ? turnQueue[turnQueue.length - 1] : direction;
+        if (dir === last || dir === OPPOSITE[last]) return;
+        if (turnQueue.length < 2) turnQueue.push(dir);
+      }
+
+      // --- Display ---
+      function escapeHtml(s) {
+        return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      }
+
+      function showOverlay(title, subHtml, btnText, action) {
+        overlayTitle.textContent = title;
+        overlaySub.innerHTML = subHtml;
+        overlayBtn.textContent = btnText;
+        overlayBtn.onclick = () => { overlayBtn.blur(); action(); };
+        overlay.hidden = false;
+      }
+      function hideOverlay() { overlay.hidden = true; }
+
+      function updateHud() {
+        scoreEl.textContent = score;
+        wordCountEl.textContent = words.length ? `Word ${wordNumber + 1} of ${words.length}` : 'No words';
+        lettersEl.classList.toggle('long', letters.length > 8);
+        lettersEl.replaceChildren(...letters.map((ch, i) => {
+          const el = document.createElement('span');
+          el.textContent = ch;
+          if (i < letterIndex) el.className = 'done';
+          else if (i === letterIndex && state !== 'over') el.className = 'next';
+          return el;
+        }));
+        pauseBtn.disabled = state !== 'running' && state !== 'paused';
+        pauseBtn.textContent = state === 'paused' ? 'Resume' : 'Pause';
+      }
+
+      // Size the board to the largest square that fits, with whole-pixel tiles
+      function fitBoard() {
+        const room = Math.min(stage.clientWidth, stage.clientHeight) - 20; // leaves space for the border and shadow
+        tile = Math.max(4, Math.floor(room / gridSize));
+        const size = tile * gridSize;
+        const dpr = window.devicePixelRatio || 1;
+        board.style.width = board.style.height = size + 'px';
+        canvas.width = canvas.height = Math.round(size * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      function roundRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      }
+
+      function draw() {
+        const t = tile, size = t * gridSize;
+
+        // Grass checkerboard
+        ctx.fillStyle = '#A9D86E';
+        ctx.fillRect(0, 0, size, size);
+        ctx.fillStyle = '#9DCF61';
+        for (let y = 0; y < gridSize; y++) {
+          for (let x = (y % 2); x < gridSize; x += 2) ctx.fillRect(x * t, y * t, t, t);
+        }
+
+        // Letter tiles
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = `600 ${Math.max(8, Math.round(t * 0.64))}px Fredoka, ui-rounded, "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif`;
+        const inset = t * 0.07, r = t * 0.2, lift = t * 0.08;
+        for (const f of foods) {
+          const x = f.x * t + inset, y = f.y * t + inset, w = t - inset * 2;
+          ctx.fillStyle = '#B98F45';
+          roundRect(x, y + lift, w, w - lift, r); ctx.fill();
+          ctx.fillStyle = '#FFF4D6';
+          roundRect(x, y, w, w - lift, r); ctx.fill();
+          ctx.fillStyle = '#2B2A3A';
+          ctx.fillText(f.letter, f.x * t + t / 2, f.y * t + t / 2 - lift / 2 + t * 0.03);
+        }
+
+        // Snake body: one thick rounded line through the middle of each segment
+        const mid = s => [s.x * t + t / 2, s.y * t + t / 2];
+        if (snake.length > 1) {
+          ctx.strokeStyle = '#4353D8';
+          ctx.lineWidth = t * 0.74;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.beginPath();
+          snake.forEach((s, i) => {
+            const [x, y] = mid(s);
+            if (i === 0) { ctx.moveTo(x, y); return; }
+            const p = snake[i - 1], jx = s.x - p.x, jy = s.y - p.y;
+            if (Math.abs(jx) > 1 || Math.abs(jy) > 1) {
+              // This pair is joined through the edge of a circular board: run each end off its own side
+              const sx = -Math.sign(jx) * t, sy = -Math.sign(jy) * t;
+              const [px, py] = mid(p);
+              ctx.lineTo(px + sx, py + sy);
+              ctx.moveTo(x - sx, y - sy);
+            }
+            ctx.lineTo(x, y);
+          });
+          ctx.stroke();
+        }
+
+        // Head with eyes looking where it is going
+        const [hx, hy] = mid(snake[0]);
+        const [dx, dy] = VEC[turnQueue[0] || direction];
+        ctx.fillStyle = crashed ? '#FF6B4A' : '#2F3CB4';
+        ctx.beginPath(); ctx.arc(hx, hy, t * 0.46, 0, Math.PI * 2); ctx.fill();
+        for (const side of [-1, 1]) {
+          const ex = hx + dx * t * 0.14 - dy * side * t * 0.19;
+          const ey = hy + dy * t * 0.14 + dx * side * t * 0.19;
+          ctx.fillStyle = '#fff';
+          ctx.beginPath(); ctx.arc(ex, ey, t * 0.13, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#1B1A28';
+          ctx.beginPath(); ctx.arc(ex + dx * t * 0.05, ey + dy * t * 0.05, t * 0.065, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+
+      // --- Input: swipe anywhere (turns as soon as the finger has moved far enough) ---
+      const SWIPE = 22; // px
+      let swipe = null;
+
+      app.addEventListener('pointerdown', e => {
+        if (e.target.closest('button')) return;
+        swipe = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false, onBoard: !!e.target.closest('.board') };
+      });
+      app.addEventListener('pointermove', e => {
+        if (!swipe || e.pointerId !== swipe.id) return;
+        const dx = e.clientX - swipe.x, dy = e.clientY - swipe.y;
+        if (Math.hypot(dx, dy) < SWIPE) return;
+        steer(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
+        swipe.x = e.clientX; swipe.y = e.clientY; swipe.moved = true; // keep tracking: one drag can make several turns
+      });
+      app.addEventListener('pointerup', e => {
+        if (!swipe || e.pointerId !== swipe.id) return;
+        if (!swipe.moved && swipe.onBoard && state === 'waiting') beginPlay(); // a plain tap on the board starts the game
+        swipe = null;
+      });
+      app.addEventListener('pointercancel', () => { swipe = null; });
+
+      // --- Input: arrow buttons (act on touch-down, not on release) ---
+      $('pad').querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('pointerdown', e => {
+          e.preventDefault();
+          btn.classList.add('on');
+          steer(btn.dataset.dir);
+        });
+        ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => btn.addEventListener(ev, () => btn.classList.remove('on')));
+        btn.addEventListener('contextmenu', e => e.preventDefault());
+      });
+
+      // --- Input: keyboard (still works with a keyboard attached) ---
+      const KEYS = { arrowup: 'up', w: 'up', arrowdown: 'down', s: 'down', arrowleft: 'left', a: 'left', arrowright: 'right', d: 'right' };
+      window.addEventListener('keydown', e => {
+        if (!sheetWrap.hidden) { if (e.key === 'Escape') closeSettings(); return; }
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        const key = e.key.toLowerCase();
+        if (KEYS[key]) { e.preventDefault(); steer(KEYS[key]); return; }
+        if (key === ' ' || key === 'p') {
+          if (e.target.tagName === 'BUTTON') return; // the button's own click handles it
+          e.preventDefault();
+          if (state === 'running') pause(); else beginPlay();
+        }
+      });
+
+      // --- Pause / settings ---
+      pauseBtn.addEventListener('click', () => { pauseBtn.blur(); state === 'running' ? pause() : beginPlay(); });
+      document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+
+      function openSettings() {
+        pause();
+        sheetWrap.hidden = false;
+      }
+      function closeSettings() {
+        if (document.activeElement) document.activeElement.blur(); // puts the on-screen keyboard away
+        sheetWrap.hidden = true;
+        if (wordInput.value !== appliedWords || parseInt(gridSizeInput.value, 10) !== appliedGrid) newGame();
+      }
+      settingsBtn.addEventListener('click', openSettings);
+      doneBtn.addEventListener('click', closeSettings);
+      sheetWrap.addEventListener('click', e => { if (e.target === sheetWrap) closeSettings(); });
+
+      gridSizeInput.addEventListener('input', () => { gridSizeValue.textContent = `${gridSizeInput.value} × ${gridSizeInput.value}`; });
+      speedInput.addEventListener('input', () => { speedValue.textContent = speedInput.value; });
+      wrapToggle.addEventListener('change', () => { board.classList.toggle('wrap', wrapToggle.checked); });
+      padToggle.addEventListener('change', () => { app.classList.toggle('no-pad', !padToggle.checked); });
+
+      // --- Keep the board fitted when the tablet rotates or the window changes size ---
+      const refit = () => { fitBoard(); draw(); };
+      if (window.ResizeObserver) new ResizeObserver(refit).observe(stage);
+      else window.addEventListener('resize', refit);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => draw());
+
+      newGame();
+    });
+  </script>
+</body>
+</html>
