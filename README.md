@@ -9,3 +9,5 @@
 [https://dangallichan.github.io/game-tests/KartCup.html](https://dangallichan.github.io/game-tests/KartCup.html)
 
 [https://dangallichan.github.io/game-tests/ToothbrushTimer.html](https://dangallichan.github.io/game-tests/ToothbrushTimer.html)
+
+[https://dangallichan.github.io/game-tests/ToothbrushRoadTrip.html](https://dangallichan.github.io/game-tests/ToothbrushRoadTrip.html)
