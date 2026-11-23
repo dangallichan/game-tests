@@ -7,3 +7,5 @@
 [https://dangallichan.github.io/game-tests/snakeWordGameTablet.html](https://dangallichan.github.io/game-tests/snakeWordGameTablet.html)
 
 [https://dangallichan.github.io/game-tests/KartCup.html](https://dangallichan.github.io/game-tests/KartCup.html)
+
+[https://dangallichan.github.io/game-tests/ToothbrushTimer.html](https://dangallichan.github.io/game-tests/ToothbrushTimer.html)
