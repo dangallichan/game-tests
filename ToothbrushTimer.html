@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- code generated for D. Gallichan by Claude, date: 23/11/26 -->
+<!-- code generated for D. Gallichan by Claude, date: 23/11/26 (sounds softened same day) -->
 <!-- Sugar Bug Rescue: a 2-minute toothbrush timer for children aged about 3-6. Single self-contained file. -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#E9F7FF">
+<meta name="apple-mobile-web-app-title" content="Sugar Bugs">
+<link rel="apple-touch-icon" href="icons/ToothbrushTimer-180.png">
+<link rel="icon" type="image/png" href="icons/ToothbrushTimer-180.png">
 <title>Sugar Bug Rescue – Toothbrush Timer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -329,58 +332,65 @@ function show(id) {
   current = id;
 }
 
-// ================= AUDIO =================
-let ac = null, master = null, noiseBuf = null;
+// ================= AUDIO (softened 23/11/26: sine voices, lower register, low-pass + compressor, no noise) =================
+const VOLUME = 0.7;
+let ac = null, bus = null, master = null;
 function ensureAudio() {
   if (!ac) {
     const C = window.AudioContext || window.webkitAudioContext;
     if (!C) return;
     ac = new C();
     master = ac.createGain();
-    master.connect(ac.destination);
-    noiseBuf = ac.createBuffer(1, ac.sampleRate * 0.2, ac.sampleRate);
-    const d = noiseBuf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const comp = ac.createDynamicsCompressor();
+    comp.threshold.value = -20; comp.ratio.value = 4; comp.attack.value = 0.01; comp.release.value = 0.2;
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3000; lp.Q.value = 0.5;
+    bus = ac.createGain();
+    bus.connect(lp); lp.connect(comp); comp.connect(master); master.connect(ac.destination);
+    const dl = ac.createDelay(1), fb = ac.createGain(), dlp = ac.createBiquadFilter(), wet = ac.createGain();
+    dl.delayTime.value = 0.19; fb.gain.value = 0.25; dlp.type = 'lowpass'; dlp.frequency.value = 1300; wet.gain.value = 0.2;
+    lp.connect(dl); dl.connect(dlp); dlp.connect(fb); fb.connect(dl); dlp.connect(wet); wet.connect(comp);
   }
-  master.gain.value = settings.sound ? 0.9 : 0;
+  master.gain.value = settings.sound ? VOLUME : 0;
   if (ac.state === 'suspended') ac.resume();
 }
 const mf = m => 440 * Math.pow(2, (m - 69) / 12);
-function tone(freq, t0, dur, o = {}) {
+function voice(freq, t0, dur, o = {}) {
   if (!ac) return;
-  const osc = ac.createOscillator(), g = ac.createGain();
-  const vol = o.vol || 0.2, att = o.attack || 0.01;
-  osc.type = o.type || 'sine';
-  osc.frequency.setValueAtTime(freq, t0);
-  if (o.slideTo) osc.frequency.exponentialRampToValueAtTime(o.slideTo, t0 + dur);
-  g.gain.setValueAtTime(0.0001, t0);
-  g.gain.exponentialRampToValueAtTime(vol, t0 + att);
-  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-  osc.connect(g); g.connect(master);
-  osc.start(t0); osc.stop(t0 + dur + 0.05);
+  const vol = o.vol || 0.12, att = o.attack || 0.02, partials = o.partials || [[1, 1], [2, 0.2], [3, 0.05]];
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0, t0);
+  g.gain.linearRampToValueAtTime(vol, t0 + att);
+  g.gain.setTargetAtTime(0, t0 + att, dur / 3.5);
+  g.connect(bus);
+  partials.forEach(([m, a]) => {
+    const os = ac.createOscillator(), pg = ac.createGain();
+    os.type = 'sine'; os.frequency.value = freq * m; pg.gain.value = a;
+    os.connect(pg); pg.connect(g);
+    os.start(t0); os.stop(t0 + att + dur * 2 + 0.1);
+  });
 }
-function noise(t0, dur, vol) {
-  if (!ac) return;
-  const s = ac.createBufferSource(), g = ac.createGain(), f = ac.createBiquadFilter();
-  s.buffer = noiseBuf; f.type = 'highpass'; f.frequency.value = 6000;
-  g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-  s.connect(f); f.connect(g); g.connect(master);
-  s.start(t0); s.stop(t0 + dur + 0.02);
+function sweep(f0, f1, t0, dur, vol) {
+  const os = ac.createOscillator(), g = ac.createGain();
+  os.type = 'sine';
+  os.frequency.setValueAtTime(f0, t0); os.frequency.exponentialRampToValueAtTime(f1, t0 + dur);
+  g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vol, t0 + 0.008); g.gain.setTargetAtTime(0, t0 + 0.01, dur / 3);
+  os.connect(g); g.connect(bus); os.start(t0); os.stop(t0 + dur * 2 + 0.05);
 }
+const BELL = [[1, 1], [2, 0.12], [4.2, 0.03]];
 const sfx = {
-  pop() { if (!ac) return; const t = ac.currentTime; tone(420, t, 0.14, { vol: 0.35, slideTo: 1500 }); tone(1800, t + 0.06, 0.1, { type: 'triangle', vol: 0.12 }); },
-  blip(high) { if (!ac) return; tone(high ? 1046 : 659, ac.currentTime, high ? 0.4 : 0.2, { type: 'triangle', vol: 0.3 }); },
-  chime() { if (!ac) return; const t = ac.currentTime; [784, 988, 1175, 1568].forEach((f, i) => tone(f, t + i * 0.09, 0.7, { type: 'triangle', vol: 0.25 })); },
+  pop() { if (!ac) return; const t = ac.currentTime; sweep(300, 560, t, 0.13, 0.14); sweep(480, 720, t + 0.06, 0.1, 0.05); },
+  blip(high) { if (!ac) return; const t = ac.currentTime; if (high) { voice(523, t, 0.6, { vol: 0.12 }); voice(784, t, 0.6, { vol: 0.08 }); } else voice(392, t, 0.35, { vol: 0.13 }); },
+  chime() { if (!ac) return; const t = ac.currentTime; [523, 659, 784, 1047].forEach((f, i) => voice(f, t + i * 0.1, 0.9, { vol: 0.09, partials: BELL })); },
   fanfare() {
     if (!ac) return; const t = ac.currentTime;
-    [72, 76, 79, 84].forEach((m, i) => tone(mf(m), t + i * 0.14, 0.3, { type: 'square', vol: 0.12 }));
-    [72, 76, 79, 84].forEach(m => tone(mf(m), t + 0.62, 1.4, { type: 'triangle', vol: 0.18 }));
-    for (let i = 0; i < 8; i++) tone(mf(96 + (i % 4) * 2), t + 0.7 + i * 0.07, 0.25, { vol: 0.06 });
+    [262, 330, 392, 523].forEach((f, i) => voice(f, t + i * 0.13, 0.4, { vol: 0.1 }));
+    [262, 330, 392, 523].forEach(f => voice(f, t + 0.6, 1.8, { vol: 0.07, attack: 0.05 }));
+    [1047, 1319, 1568].forEach((f, i) => voice(f, t + 0.9 + i * 0.12, 0.8, { vol: 0.035, partials: BELL }));
   }
 };
 
-// Simple generated background tune: C pentatonic melody over C–Am–F–G
-const PENT = [72, 74, 76, 79, 81, 84, 86, 88];
+// Gentle bouncy tune: C pentatonic melody, bass, soft chords, C–Am–F–G
+const PENT = [60, 62, 64, 67, 69, 72, 74, 76];
 const PROG = [{ bass: 48, pcs: [0, 4, 7] }, { bass: 45, pcs: [9, 0, 4] }, { bass: 41, pcs: [5, 9, 0] }, { bass: 43, pcs: [7, 11, 2] }];
 const RHY = [[1,0,1,1,1,0,1,0], [1,1,1,0,1,0,1,1], [1,0,1,0,1,1,1,0], [1,0,0,1,1,0,1,1]];
 const music = {
@@ -393,23 +403,25 @@ const music = {
   },
   stop() { clearInterval(this.timer); this.timer = null; },
   sched() {
-    const spb = 60 / (this.fast ? 140 : 112) / 2; // eighth notes
-    while (this.next < ac.currentTime + 0.15) {
-      this.play(this.step, this.next, spb);
-      this.next += spb;
+    while (this.next < ac.currentTime + 0.2) {
+      const beat = 60 / (this.fast ? 118 : 100);
+      this.play(this.step, this.next, beat);
+      this.next += beat / 2;
       this.step = (this.step + 1) % 8;
       if (this.step === 0) this.bar++;
     }
   },
-  play(s, t, spb) {
+  play(s, t, beat) {
     const ch = PROG[this.bar % 4];
-    if (s === 0) this.rhythm = RHY[Math.floor(Math.random() * RHY.length)];
-    if (s === 0 || s === 4) tone(mf(ch.bass), t, spb * 1.8, { type: 'triangle', vol: 0.16 });
-    if (s === 6) tone(mf(ch.bass + 7), t, spb * 0.9, { type: 'triangle', vol: 0.12 });
-    if (s % 2 === 1) noise(t, 0.04, 0.035);
+    if (s === 0) {
+      this.rhythm = RHY[Math.floor(Math.random() * RHY.length)];
+      ch.pcs.forEach(pc => voice(mf(60 + pc), t, beat * 3, { vol: 0.03, attack: 0.08, partials: [[1, 1], [2, 0.1]] }));
+    }
+    if (s === 0 || s === 4) voice(mf(ch.bass), t, beat * 1.2, { vol: 0.12, attack: 0.01, partials: [[1, 1], [2, 0.45], [3, 0.12]] });
+    if (s === 6) voice(mf(ch.bass + 7), t, beat * 0.6, { vol: 0.09, attack: 0.01, partials: [[1, 1], [2, 0.45], [3, 0.12]] });
+    if (s === 0 || s === 4) sweep(110, 50, t, 0.12, 0.12);
     if (this.rhythm[s]) {
       if (s === 0 || s === 4) {
-        // land on a chord tone near the current note
         let best = this.deg, bd = 99;
         PENT.forEach((m, i) => { if (ch.pcs.includes(m % 12) && Math.abs(i - this.deg) < bd) { bd = Math.abs(i - this.deg); best = i; } });
         this.deg = best;
@@ -417,7 +429,7 @@ const music = {
         const moves = [-1, 1, 1, -1, 2, -2, 0];
         this.deg = Math.max(0, Math.min(PENT.length - 1, this.deg + moves[Math.floor(Math.random() * moves.length)]));
       }
-      tone(mf(PENT[this.deg]), t, spb * 0.9, { type: 'triangle', vol: 0.09 });
+      voice(mf(PENT[this.deg]), t, beat * 0.4, { vol: 0.07, attack: 0.015 });
     }
   }
 };
@@ -746,7 +758,7 @@ function openMenu() { clearArmed = false; refreshMenu(); $('#menu').classList.ad
 function closeMenu() { $('#menu').classList.remove('on'); }
 $('#mSound').onclick = () => {
   settings.sound = !settings.sound; saveSettings();
-  if (master) master.gain.value = settings.sound ? 0.9 : 0;
+  if (master) master.gain.value = settings.sound ? VOLUME : 0;
   refreshMenu();
 };
 document.querySelectorAll('#mDur button').forEach(b => b.onclick = () => {
