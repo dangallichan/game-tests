@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <!-- code generated for D. Gallichan by Claude, date: 23/11/26 -->
+<!-- updated 24/11/26: faster brush, four car-themed soundtracks -->
 <!-- Toothbrush Road Trip: classic toy-car version of the 2-minute toothbrush timer (ages ~3-6). Single self-contained file. -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -75,6 +76,19 @@
   }
   .btnrow { display: flex; gap: 6vmin; align-items: center; }
 
+  .tracks { display: flex; gap: 3vmin; }
+  .track {
+    width: 11.5vmin; height: 11.5vmin; min-width: 58px; min-height: 58px; border-radius: 50%; border: none; padding: 0;
+    background: #fff; box-shadow: 0 .8vmin 0 var(--line); font-size: clamp(26px, 6vmin, 52px);
+    display: grid; place-items: center; transition: transform .2s;
+  }
+  .track.sel { box-shadow: 0 0 0 .8vmin #fff, 0 0 0 1.6vmin var(--red); transform: scale(1.08); }
+  .play, .round, .track, .bigCar { flex-shrink: 0; }
+  #start { gap: 2vmin; }
+  #start .bigCar { width: min(50vmin, 440px); }
+  #start .play { width: 22vmin; height: 22vmin; }
+  #start .round { width: 13vmin; height: 13vmin; }
+
   /* ---------- brushing screen ---------- */
   #brush { justify-content: flex-start; gap: 1vmin; }
   .stage { position: relative; flex: 1; width: 100%; min-height: 0; display: flex; align-items: center; justify-content: center; }
@@ -101,9 +115,9 @@
   .spark.on { animation: twinkle 1.1s ease-in-out infinite; }
   #hl { fill: none; stroke: var(--sun); stroke-width: 5; stroke-dasharray: 14 8; opacity: 0; filter: drop-shadow(0 0 6px rgba(255,201,60,.9)); }
   #hl.on { animation: hlpulse .9s ease-in-out infinite; }
-  #brushPos { transition: transform .9s cubic-bezier(.5,1.4,.5,1), opacity .4s; opacity: 0; }
+  #brushPos { transition: transform .5s cubic-bezier(.5,1.4,.5,1), opacity .4s; opacity: 0; }
   #brushPos.on { opacity: 1; }
-  .scrub { animation: scrub .32s ease-in-out infinite alternate; }
+  .scrub { animation: scrub .13s ease-in-out infinite alternate; }
   #arrowPos { opacity: 0; transition: opacity .3s; }
   #arrowPos.on { opacity: 1; }
   #arrow { animation: arrowbob .6s ease-in-out infinite; }
@@ -177,7 +191,7 @@
   @keyframes wash { 0% { transform: scale(1); opacity: 1; } 30% { transform: scale(1.25); opacity: 1; } 100% { transform: scale(.1); opacity: 0; } }
   @keyframes rise { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-28px); opacity: 0; } }
   @keyframes twinkle { 0%,100% { transform: scale(.6) rotate(0); opacity: .65; } 50% { transform: scale(1.15) rotate(20deg); opacity: 1; } }
-  @keyframes scrub { from { transform: translateX(-9px); } to { transform: translateX(9px); } }
+  @keyframes scrub { from { transform: translateX(-12px); } to { transform: translateX(12px); } }
   @keyframes hlpulse { 0%,100% { opacity: .5; } 50% { opacity: 1; } }
   @keyframes arrowbob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(10px); } }
   @keyframes spinIn { from { transform: scale(0) rotate(-200deg); } to { transform: scale(1) rotate(0); } }
@@ -193,6 +207,7 @@
   <button class="play" id="playBtn" aria-label="Start brushing">
     <svg viewBox="0 0 10 10"><path d="M1 0.5 L9.5 5 L1 9.5 Z" fill="#fff" stroke="#fff" stroke-width="1" stroke-linejoin="round"/></svg>
   </button>
+  <div class="tracks" id="tracks"></div>
   <div class="btnrow">
     <button class="round" id="garageBtn" aria-label="My garage"><svg id="garageIcon" viewBox="-6 -70 132 78"></svg><span class="badge" id="badge">0</span></button>
   </div>
@@ -293,7 +308,7 @@
     <button class="wide warn" id="mStop">Stop brushing (no car)</button>
     <button class="wide" id="mClear">Clear garage</button>
     <button class="wide primary" id="mClose">Done</button>
-    <p class="note">The time is split into four equal parts: top left, top right, bottom right, bottom left. The car reaches a chequered flag (with a toot and a chime) each time it's time to move on, and the arrow shows where. Each finished brush parks a new car in the garage, saved on this device only. The screen is kept awake while brushing where the browser allows it.</p>
+    <p class="note">The time is split into four equal parts: top left, top right, bottom right, bottom left. The car reaches a chequered flag (with a toot and a chime) each time it's time to move on, and the arrow shows where. Children pick a soundtrack (racing, road trip, country or beach van) with the round music buttons on the start screen; tapping one plays a short preview. Each finished brush parks a new car in the garage, saved on this device only. The screen is kept awake while brushing where the browser allows it.</p>
   </div>
 </div>
 
@@ -316,7 +331,7 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 };
-const settings = Object.assign({ sound: true, engine: true, duration: 120 }, store.get('crt.settings', {}));
+const settings = Object.assign({ sound: true, engine: true, duration: 120, track: 'roadtrip' }, store.get('crt.settings', {}));
 function saveSettings() { store.set('crt.settings', settings); }
 
 let current = 'start';
@@ -505,49 +520,126 @@ function engineStop() {
   e.o.stop(t + 1); e.lfo.stop(t + 1);
 }
 
-// Jaunty swung road-trip tune: C pentatonic melody, walking bass, soft chords, C–Am–F–G
-const PENT = [60, 62, 64, 67, 69, 72, 74, 76];
-const PROG = [{ bass: 48, pcs: [0, 4, 7] }, { bass: 45, pcs: [9, 0, 4] }, { bass: 41, pcs: [5, 9, 0] }, { bass: 43, pcs: [7, 11, 2] }];
-const RHY = [[1,0,1,1,1,0,1,0], [1,1,1,0,1,0,1,1], [1,0,1,0,1,1,1,0], [1,0,0,1,1,0,1,1]];
+// ---------- soundtracks (24/11/26): four car-themed tracks, chosen on the start screen ----------
+let noiseBuf = null;
+function noiseHit(t, freq, q, vol, dur) {
+  if (!noiseBuf) {
+    noiseBuf = ac.createBuffer(1, ac.sampleRate * 0.3, ac.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+  s.buffer = noiseBuf; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(f); f.connect(g); g.connect(bus); s.start(t); s.stop(t + dur + 0.02);
+}
+// soft percussion: low thump, bandpassed clap and shaker (nothing hissy)
+const kick = (t, v = 0.15) => sweep(120, 48, t, 0.13, v);
+const clap = (t, v = 0.05) => noiseHit(t, 1400, 0.8, v, 0.11);
+const shaker = (t, v = 0.016) => noiseHit(t, 3000, 1.2, v, 0.045);
+const BASSP = [[1, 1], [2, 0.45], [3, 0.12]];
+const KEYS = [[1, 1], [2, 0.3], [3, 0.1]];
+const CH = { C: [48, [60, 64, 67]], G: [43, [59, 62, 67]], Am: [45, [57, 60, 64]], F: [41, [57, 60, 65]] };
+function chord(n) { const [bass, notes] = CH[n]; return { bass, notes, pcs: notes.map(x => x % 12) }; }
+const PENT = [60, 62, 64, 67, 69, 72, 74, 76, 79];
+
+// bpm = beats per minute; steps per bar; spb = steps per beat; swing delays the off-beat steps
+const TRACKS = {
+  racing: {
+    icon: '🏎️', label: 'Racing', bpm: 144, steps: 16, spb: 4, prog: ['C', 'Am', 'F', 'G'],
+    mel: { vol: 0.065, attack: 0.008, partials: [[1, 1], [2, 0.4], [3, 0.2]] },
+    rhythms: [[1,0,1,0,1,0,1,1,0,0,1,0,1,0,0,0], [1,0,0,1,0,0,1,0,1,0,1,0,1,0,1,0], [1,0,1,1,0,0,1,0,1,0,0,1,0,0,1,0]],
+    play(s, t, ch, sd) {
+      if (s === 0 || s === 8 || s === 10) kick(t, 0.14);
+      if (s === 4 || s === 12) clap(t, 0.05);
+      if (s % 4 === 2) shaker(t);
+      if (s % 2 === 0) voice(mf(ch.bass), t, sd * 1.4, { vol: 0.1, attack: 0.006, partials: BASSP });
+      if (s === 0) [ch.bass + 12, ch.bass + 19].forEach(m => voice(mf(m), t, sd * 12, { vol: 0.03, attack: 0.02, partials: [[1, 1], [2, 0.3], [3, 0.15]] }));
+    }
+  },
+  roadtrip: {
+    icon: '🚙', label: 'Road trip', bpm: 132, steps: 8, spb: 2, swing: 0.24, prog: ['C', 'Am', 'F', 'G'],
+    mel: { vol: 0.075, attack: 0.015, partials: [[1, 1], [2, 0.2], [3, 0.05]] },
+    rhythms: [[1,0,1,1,1,0,1,0], [1,1,1,0,1,0,1,1], [1,0,1,0,1,1,1,0], [1,0,0,1,1,0,1,1]],
+    play(s, t, ch, sd) {
+      if (s === 0 || s === 4) kick(t, 0.12);
+      if (s === 2 || s === 6) clap(t, 0.035);
+      if (s % 2 === 0) voice(mf(ch.bass + [0, 7, 12, 7][s / 2]), t, sd * 1.6, { vol: 0.11, attack: 0.01, partials: BASSP });
+      if (s === 0) ch.notes.forEach(n => voice(mf(n), t, sd * 6, { vol: 0.028, attack: 0.08, partials: [[1, 1], [2, 0.1]] }));
+    }
+  },
+  country: {
+    icon: '🚜', label: 'Country', bpm: 128, steps: 8, spb: 2, prog: ['C', 'F', 'C', 'G'],
+    mel: { vol: 0.06, attack: 0.003, partials: [[1, 1], [2, 0.5], [3, 0.3], [4, 0.15]] },
+    rhythms: [[1,1,1,0,1,1,1,0], [1,0,1,1,1,0,1,1], [1,1,1,1,1,0,1,0]],
+    play(s, t, ch, sd) {
+      if (s === 0 || s === 4) { kick(t, 0.1); voice(mf(ch.bass + (s ? 7 : 0)), t, sd * 1.8, { vol: 0.12, attack: 0.008, partials: BASSP }); }
+      if (s === 2 || s === 6) ch.notes.forEach(n => voice(mf(n), t, sd * 0.9, { vol: 0.03, attack: 0.003, partials: KEYS }));
+      if (s % 2 === 1) shaker(t, 0.014);
+    }
+  },
+  surf: {
+    icon: '🚐', label: 'Beach van', bpm: 138, steps: 16, spb: 4, prog: ['C', 'F', 'G', 'F'],
+    mel: { vol: 0.06, attack: 0.006, legato: true, partials: [[1, 1], [2, 0.3], [3, 0.2]] },
+    rhythms: [[1,0,0,1,0,0,1,0,0,0,1,0,1,0,0,0], [1,0,1,0,1,0,1,0,0,0,0,0,1,0,1,0], [1,0,1,1,0,0,1,0,1,0,0,1,0,0,1,0]],
+    play(s, t, ch, sd) {
+      if (s === 0 || s === 8) kick(t, 0.13);
+      if (s === 4 || s === 12) clap(t, 0.045);
+      if (s % 2 === 0) shaker(t, 0.012);
+      if (s % 4 !== 1) voice(mf(ch.bass + (s % 8 === 6 ? 12 : 0)), t, sd * 0.9, { vol: 0.09, attack: 0.005, partials: BASSP });
+      if (s === 2 || s === 10) ch.notes.forEach(n => voice(mf(n), t, sd * 2, { vol: 0.025, attack: 0.004, partials: KEYS }));
+    }
+  }
+};
+
 const music = {
-  timer: null, next: 0, step: 0, bar: 0, fast: false, deg: 2, rhythm: RHY[0],
-  start() {
+  timer: null, next: 0, step: 0, bar: 0, fast: false, track: null, phrase: null, deg: 3, stopAt: 0,
+  start(id, bars) {
     if (!ac) return;
     this.stop();
-    this.next = ac.currentTime + 0.1; this.step = 0; this.bar = 0; this.deg = 2; this.fast = false;
-    this.timer = setInterval(() => this.sched(), 40);
+    this.track = TRACKS[id] || TRACKS.roadtrip;
+    this.next = ac.currentTime + 0.08; this.step = 0; this.bar = 0; this.fast = false; this.deg = 3;
+    this.stopAt = bars || 0;
+    this.makePhrase();
+    this.timer = setInterval(() => this.sched(), 30);
   },
   stop() { clearInterval(this.timer); this.timer = null; },
-  sched() {
-    while (this.next < ac.currentTime + 0.2) {
-      const beat = 60 / (this.fast ? 120 : 100);
-      this.play(this.step, this.next, beat);
-      this.next += beat * (this.step % 2 === 0 ? 0.62 : 0.38); // swing
-      this.step = (this.step + 1) % 8;
-      if (this.step === 0) this.bar++;
-    }
-  },
-  play(s, t, beat) {
-    const ch = PROG[this.bar % 4];
-    if (s === 0) {
-      this.rhythm = RHY[Math.floor(Math.random() * RHY.length)];
-      ch.pcs.forEach(pc => voice(mf(60 + pc), t, beat * 3, { vol: 0.03, attack: 0.08, partials: [[1, 1], [2, 0.1]] }));
-    }
-    if (s % 2 === 0) {
-      const walk = [0, 7, 12, 7];
-      voice(mf(ch.bass + walk[s / 2]), t, beat * 0.8, { vol: 0.12, attack: 0.01, partials: [[1, 1], [2, 0.45], [3, 0.12]] });
-    }
-    if (s === 0 || s === 4) sweep(110, 50, t, 0.12, 0.14);
-    if (this.rhythm[s]) {
-      if (s === 0 || s === 4) {
-        let best = this.deg, bd = 99;
-        PENT.forEach((m, i) => { if (ch.pcs.includes(m % 12) && Math.abs(i - this.deg) < bd) { bd = Math.abs(i - this.deg); best = i; } });
-        this.deg = best;
-      } else {
-        const moves = [-1, 1, 1, -1, 2, -2, 0];
-        this.deg = Math.max(0, Math.min(PENT.length - 1, this.deg + moves[Math.floor(Math.random() * moves.length)]));
+  // a 4-bar melody following the chords; played twice, then a new one
+  makePhrase() {
+    const T = this.track;
+    this.phrase = T.prog.map(name => {
+      const ch = chord(name), r = T.rhythms[Math.floor(Math.random() * T.rhythms.length)], notes = [];
+      for (let s = 0; s < T.steps; s++) {
+        if (!r[s]) continue;
+        if (s % (T.spb * 2) === 0) {
+          let best = this.deg, bd = 99;
+          PENT.forEach((m, i) => { if (ch.pcs.includes(m % 12) && Math.abs(i - this.deg) < bd) { bd = Math.abs(i - this.deg); best = i; } });
+          this.deg = best;
+        } else {
+          const moves = [-1, 1, 1, -1, 2, -2, 0];
+          this.deg = Math.max(0, Math.min(PENT.length - 1, this.deg + moves[Math.floor(Math.random() * moves.length)]));
+        }
+        notes.push({ s, deg: this.deg });
       }
-      voice(mf(PENT[this.deg]), t, beat * 0.6, { vol: 0.075, attack: 0.015 });
+      notes.forEach((n, i) => { n.len = (i + 1 < notes.length ? notes[i + 1].s : T.steps) - n.s; });
+      return notes;
+    });
+  },
+  sched() {
+    const T = this.track;
+    while (this.timer && this.next < ac.currentTime + 0.2) {
+      const sd = 60 / (T.bpm * (this.fast ? 1.08 : 1)) / T.spb;
+      const t = this.next + (T.swing && this.step % 2 === 1 ? sd * T.swing : 0);
+      const pb = this.bar % T.prog.length, ch = chord(T.prog[pb]);
+      T.play(this.step, t, ch, sd);
+      const n = this.phrase[pb].find(x => x.s === this.step);
+      if (n) voice(mf(PENT[n.deg]), t, Math.min(n.len * sd * (T.mel.legato ? 0.9 : 0.6), 0.6), { vol: T.mel.vol, attack: T.mel.attack, partials: T.mel.partials });
+      this.next += sd;
+      if (++this.step >= T.steps) {
+        this.step = 0; this.bar++;
+        if (this.stopAt && this.bar >= this.stopAt) { this.stop(); return; }
+        if (this.bar % (T.prog.length * 2) === 0) this.makePhrase();
+      }
     }
   }
 };
@@ -743,6 +835,7 @@ let nextCar = randomCar();
 
 function startBrushing() {
   ensureAudio();
+  music.stop();
   requestWake();
   setRoadCar(nextCar);
   resetMouth();
@@ -750,7 +843,7 @@ function startBrushing() {
   countdown(() => {
     run = { start: performance.now(), T: settings.duration * 1000, zone: -1, done: false, car: nextCar };
     $('#road').classList.add('moving');
-    music.start();
+    music.start(settings.track);
     engineStart();
     tick();
     tickTimer = setInterval(tick, 100);
@@ -958,6 +1051,17 @@ $('#backBtn').onclick = () => { updateBadge(); show('start'); };
 document.addEventListener('keydown', e => {
   if ((e.code === 'Space' || e.code === 'Enter') && current === 'start' && !$('#menu').classList.contains('on')) { e.preventDefault(); startBrushing(); }
 });
+function renderTracks() {
+  const box = $('#tracks'); box.innerHTML = '';
+  Object.entries(TRACKS).forEach(([id, T]) => {
+    const b = document.createElement('button');
+    b.className = 'track' + (settings.track === id ? ' sel' : '');
+    b.textContent = T.icon; b.setAttribute('aria-label', T.label + ' music');
+    b.onclick = () => { settings.track = id; saveSettings(); renderTracks(); ensureAudio(); music.start(id, 2); };
+    box.appendChild(b);
+  });
+}
+renderTracks();
 paintCar('#startCar', nextCar);
 paintCar('#garageIcon', { type: 'mini', color: '#D7263D' });
 paintCar('#garageIcon2', { type: 'mini', color: '#D7263D' });
