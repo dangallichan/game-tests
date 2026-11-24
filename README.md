@@ -11,3 +11,5 @@
 [https://dangallichan.github.io/game-tests/ToothbrushTimer.html](https://dangallichan.github.io/game-tests/ToothbrushTimer.html)
 
 [https://dangallichan.github.io/game-tests/ToothbrushRoadTrip.html](https://dangallichan.github.io/game-tests/ToothbrushRoadTrip.html)
+
+[https://dangallichan.github.io/game-tests/ToothbrushTimerV2.html](https://dangallichan.github.io/game-tests/ToothbrushTimerV2.html)
