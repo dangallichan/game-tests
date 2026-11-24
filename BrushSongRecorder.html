@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<!-- code generated for D. Gallichan by Claude, date: 24/11/26 -->
+<!-- Brush Song sing-along recorder: backing track at 128 bpm (each verse = 16 bars = 30 s), guide melody,
+     karaoke lyrics, microphone recording per verse or whole song, take playback/download, WAV backing export. -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#E9F7FF">
+<title>Brush Song – Sing-along Recorder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#E9F7FF; --ink:#2B2A3A; --soft:#6E6A7C; --sky:#4FB3F0; --sky-deep:#2E8FD0; --coral:#FF5F6D; --sun:#FFC93C; --line:#CDE6F5; --card:#fff; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--paper); color: var(--ink); font-family: 'Fredoka', system-ui, sans-serif; }
+  body { padding: max(12px, env(safe-area-inset-top)) 12px max(24px, env(safe-area-inset-bottom)); }
+  main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+  h1 { margin: 4px 0 0; font-size: 28px; color: var(--sky-deep); }
+  h2 { margin: 0 0 8px; font-size: 18px; color: var(--sky-deep); }
+  .card { background: var(--card); border-radius: 16px; padding: 14px; box-shadow: 0 4px 0 var(--line); }
+  .tip { margin: 0; font-size: 14px; color: var(--soft); line-height: 1.45; }
+  .segs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .segs button, .toggle { border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 8px 12px; font: inherit; font-size: 15px; color: var(--ink); cursor: pointer; }
+  .segs button.sel, .toggle.sel { background: var(--sky); border-color: var(--sky); color: #fff; }
+  .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .transport { display: flex; gap: 10px; flex-wrap: wrap; }
+  .big { border: none; border-radius: 14px; padding: 12px 18px; font: inherit; font-size: 18px; font-weight: 600; cursor: pointer; color: #fff; background: var(--sky); box-shadow: 0 4px 0 var(--sky-deep); }
+  .big.rec { background: var(--coral); box-shadow: 0 4px 0 #C8414D; }
+  .big.stop { background: #7D8794; box-shadow: 0 4px 0 #5D6670; }
+  .big:disabled { opacity: .45; cursor: default; }
+  .big:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.2); }
+  #status { font-size: 15px; color: var(--soft); min-height: 20px; }
+  #status.recording { color: var(--coral); font-weight: 600; }
+  .meter { width: 140px; height: 10px; border-radius: 5px; background: #EEF3F7; overflow: hidden; }
+  .meter div { height: 100%; width: 0; background: linear-gradient(90deg, #6FD6B3, #FFC93C 70%, #FF5F6D); transition: width .05s; }
+
+  #stage { position: relative; }
+  #count { text-align: center; font-size: 56px; font-weight: 700; color: var(--coral); height: 64px; line-height: 64px; }
+  #lyrics { max-height: 46vh; overflow-y: auto; scroll-behavior: smooth; padding: 4px 2px; }
+  .sec { font-size: 14px; font-weight: 600; color: var(--sky-deep); text-transform: uppercase; letter-spacing: .06em; margin: 14px 0 4px; }
+  .line { font-size: 22px; line-height: 1.5; padding: 3px 8px; border-radius: 10px; color: #8A93A0; transition: background .15s, color .15s; }
+  .line.now { background: #FFF6D8; color: var(--ink); font-size: 26px; }
+  .line.past { color: #B4BCC6; }
+  .syl.done { color: var(--sky-deep); }
+  .syl.now { color: var(--coral); }
+  .line.now .syl:not(.done):not(.now) { color: var(--ink); }
+
+  .takes { display: flex; flex-direction: column; gap: 10px; }
+  .take { border: 2px solid var(--line); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .take .meta { font-size: 14px; color: var(--soft); }
+  .take audio { width: 100%; }
+  .take .row button, .take .row a { font: inherit; font-size: 15px; border: none; border-radius: 10px; padding: 7px 12px; background: #EEF6FB; color: var(--ink); cursor: pointer; text-decoration: none; }
+  .take .row a { background: var(--sky); color: #fff; }
+  details summary { cursor: pointer; font-weight: 600; color: var(--sky-deep); }
+  ol { margin: 6px 0 0; padding-left: 20px; } li { margin: 4px 0; font-size: 15px; line-height: 1.4; }
+</style>
+</head>
+<body>
+<main>
+  <h1>🎤 Brush Song recorder</h1>
+  <div class="card">
+    <p class="tip"><b>Wear headphones</b> (wired if possible) so the backing doesn't leak into the recording. Pick a verse, press <b>Practise</b> to learn it with the guide tune, then <b>Record</b>. There are 2 bars of clicks to count you in. Each verse is exactly 30 seconds. Download the takes you like and send them to Claude in the chat.</p>
+  </div>
+
+  <div class="card">
+    <h2>1. What to sing</h2>
+    <div class="segs" id="parts"></div>
+    <div class="row" style="margin-top:10px">
+      <span>Guide tune</span><button class="toggle" id="guideBtn"></button>
+      <span>Backing</span><button class="toggle" id="backBtn"></button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>2. Practise or record</h2>
+    <div class="transport">
+      <button class="big" id="practise">▶ Practise</button>
+      <button class="big rec" id="record">● Record</button>
+      <button class="big stop" id="stop" disabled>■ Stop</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <span class="tip">Mic level</span><div class="meter"><div id="meter"></div></div>
+      <span id="status"></span>
+    </div>
+  </div>
+
+  <div class="card" id="stage">
+    <div id="count"></div>
+    <div id="lyrics"></div>
+  </div>
+
+  <div class="card">
+    <h2>3. Your takes</h2>
+    <p class="tip" id="noTakes">Takes appear here. They're only kept until you close the page, so download the good ones.</p>
+    <div class="takes" id="takes"></div>
+  </div>
+
+  <div class="card">
+    <details>
+      <summary>Prefer to record in another app?</summary>
+      <p class="tip" style="margin-top:8px">Download the backing (with the same 2-bar count-in), play it in your headphones from one device and record your voice on another, e.g. Voice Memos or GarageBand. Start the recording a moment before you press play on the backing.</p>
+      <div class="row" style="margin-top:8px">
+        <button class="toggle" id="wavGuide">⬇ Backing + guide tune (WAV)</button>
+        <button class="toggle" id="wavPlain">⬇ Backing only (WAV)</button>
+      </div>
+      <p class="tip" id="wavStatus"></p>
+    </details>
+  </div>
+</main>
+
+<script>
+// code generated for D. Gallichan by Claude, date: 24/11/26
+'use strict';
+const $ = s => document.querySelector(s);
+
+// ================= THE SONG =================
+const BPM = 128, BEAT = 60 / BPM, BAR = BEAT * 4, S16 = BEAT / 4; // 16 bars = 30 s exactly
+const PART_NAMES = ['Top left', 'Top right', 'Bottom right', 'Bottom left'];
+const ZONE_WORDS = [['top', 'left'], ['top', 'right'], ['bot-tom', 'right'], ['bot-tom', 'left']];
+const REMIND = [
+  ['Out-side, in-side, back and front,', 'Sug-ar bugs are on the run!'],
+  ["Don't for-get the bump-y tops,", 'Chew-y bits where sug-ar stops!'],
+  ['Lit-tle cir-cles, nice and slow,', 'Wig-gle where the gums all go!'],
+  ['Way back teeth all hide a-way,', 'Find them, brush them ev-ery day!']
+];
+const CH = { C: [36, [60, 64, 67]], G: [43, [59, 62, 67]], F: [41, [57, 60, 65]], Am: [45, [57, 60, 64]] };
+const N = s => { const m = s.match(/^([A-G])(\d)$/); return 12 * (+m[2] + 1) + { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]]; };
+function tokens(line) {
+  const out = [];
+  line.split(' ').forEach(w => { const p = w.split('-'); p.forEach((x, i) => out.push(i < p.length - 1 ? x + '-' : x)); });
+  return out;
+}
+
+function buildPart(k) {
+  const z = ZONE_WORDS[k], nz = ZONE_WORDS[k + 1], last = k === 3;
+  const bars = []; let cur;
+  const bar = ch => { cur = { chord: ch, ev: [], t: 0 }; bars.push(cur); };
+  const note = (p, d, syl) => { cur.ev.push({ p: p ? N(p) : null, t: cur.t, d, syl: syl || null }); cur.t += d; };
+  const zw = (word, p, d, punct = '') => {
+    const parts = tokens(word);
+    if (parts.length === 2) { note(p, d / 2, parts[0]); note(p, d / 2, parts[1] + punct); }
+    else note(p, d, word + punct);
+  };
+  const hook = (ch, p1) => { bar(ch); note(p1, 4, 'Brush'); note(p1, 2, 'the'); zw(z[0], 'C5', 2); zw(z[1], 'C5', 4, ','); note(null, 4); };
+  const verse = () => {
+    hook('C', 'G4');
+    bar('C'); zw(z[0], 'D5', 2); zw(z[1], 'E5', 4, ','); zw(z[0], 'D5', 2); zw(z[1], 'C5', 4, ','); note(null, 4);
+    hook('F', 'A4');
+    bar('G'); note('D5', 4, 'round'); note('D5', 2, 'and'); note('B4', 6, 'round!'); note(null, 4);
+  };
+  verse(); verse();
+  const A = tokens(REMIND[k][0]), B = tokens(REMIND[k][1]);
+  if (A.length !== 7 || B.length !== 7) throw new Error('reminder lines must have 7 syllables');
+  bar('C'); ['E5', 'E5', 'F5', 'E5'].forEach((p, i) => note(p, 4, A[i]));
+  bar('G'); note('D5', 4, A[4]); note('D5', 4, A[5]); note('B4', 8, A[6]);
+  bar('F'); ['A4', 'A4', 'C5', 'A4'].forEach((p, i) => note(p, 4, B[i]));
+  bar('C'); note('D5', 4, B[4]); note('D5', 4, B[5]); note('C5', 8, B[6]);
+  hook('F', 'A4');
+  bar('G'); note('D5', 4, 'near-'); note('D5', 2, 'ly'); note('B4', 6, 'done!'); note(null, 4);
+  if (!last) {
+    bar('G'); note('G4', 2, 'Rea-'); note('A4', 2, 'dy,'); note('B4', 2, 'stea-'); note('C5', 2, 'dy,'); note('G5', 8, 'SWAP!');
+    bar('G'); note('B4', 2, 'to'); note('C5', 2, 'the'); zw(nz[0], 'D5', 4); zw(nz[1], 'G5', 4, '!'); note(null, 4);
+  } else {
+    bar('C'); note('G4', 4, 'All'); note('C5', 4, 'clean!'); note('E5', 4, 'Big'); note('G5', 4, 'smile!');
+    bar('C'); note('A5', 2, 'Spit,'); note('G5', 2, "don't"); note('E5', 4, 'rinse,'); note('D5', 2, 'hoo-'); note('C5', 6, 'ray!');
+  }
+  bars.forEach((b, i) => { if (b.t !== 16) throw new Error(`part ${k} bar ${i + 1} has ${b.t} sixteenths`); });
+  if (bars.length !== 16) throw new Error('part must be 16 bars');
+  return bars;
+}
+const PARTS = [0, 1, 2, 3].map(buildPart);
+
+// timeline: 2 count-in bars, the chosen part(s), then a short ending bar
+function timeline(sel) {
+  const items = [{ count: 1 }, { count: 2 }];
+  (sel === 'all' ? [0, 1, 2, 3] : [sel]).forEach(k => PARTS[k].forEach((b, i) => items.push({ part: k, bar: i, ...b })));
+  items.push({ tail: true });
+  return items;
+}
+
+// ================= SOUND ENGINE (works on live or offline audio contexts) =================
+const BASSP = [[1, 1], [2, 0.45], [3, 0.12]], KEYS = [[1, 1], [2, 0.3], [3, 0.1]], LEAD = [[1, 1], [2, 0.35], [3, 0.12]];
+const mf = m => 440 * Math.pow(2, (m - 69) / 12);
+function makeEngine(ctx) {
+  const master = ctx.createGain(); master.gain.value = 0.8;
+  const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 4;
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3400; lp.Q.value = 0.5;
+  const bus = ctx.createGain(), backing = ctx.createGain(), guide = ctx.createGain();
+  backing.connect(bus); guide.connect(bus); bus.connect(lp); lp.connect(comp); comp.connect(master); master.connect(ctx.destination);
+  const dl = ctx.createDelay(1), fb = ctx.createGain(), dlp = ctx.createBiquadFilter(), wet = ctx.createGain();
+  dl.delayTime.value = BEAT * 0.75; fb.gain.value = 0.2; dlp.type = 'lowpass'; dlp.frequency.value = 1400; wet.gain.value = 0.14;
+  lp.connect(dl); dl.connect(dlp); dlp.connect(fb); fb.connect(dl); dlp.connect(wet); wet.connect(comp);
+  const noise = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.3), ctx.sampleRate);
+  const nd = noise.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+
+  function voice(freq, t0, dur, o = {}) {
+    const vol = o.vol || 0.12, att = o.attack || 0.02, partials = o.partials || KEYS;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vol, t0 + att); g.gain.setTargetAtTime(0, t0 + att, dur / 3.5);
+    g.connect(o.dest || backing);
+    partials.forEach(([m, a]) => {
+      const os = ctx.createOscillator(), pg = ctx.createGain();
+      os.type = 'sine'; os.frequency.value = freq * m; pg.gain.value = a;
+      os.connect(pg); pg.connect(g); os.start(t0); os.stop(t0 + att + dur * 2 + 0.1);
+    });
+  }
+  function sweep(f0, f1, t0, dur, vol) {
+    const os = ctx.createOscillator(), g = ctx.createGain();
+    os.frequency.setValueAtTime(f0, t0); os.frequency.exponentialRampToValueAtTime(f1, t0 + dur);
+    g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vol, t0 + 0.006); g.gain.setTargetAtTime(0, t0 + 0.01, dur / 3);
+    os.connect(g); g.connect(backing); os.start(t0); os.stop(t0 + dur * 2 + 0.05);
+  }
+  function noiseHit(t, freq, q, vol, dur) {
+    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = noise; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(backing); s.start(t); s.stop(t + dur + 0.02);
+  }
+  function scheduleBar(it, t) {
+    if (it.count) {
+      for (let b = 0; b < 4; b++) sweep(b === 0 ? 1300 : 950, b === 0 ? 1000 : 720, t + b * BEAT, 0.05, it.count === 2 && b === 0 ? 0.16 : 0.12);
+      return;
+    }
+    if (it.tail) {
+      sweep(120, 48, t, 0.15, 0.15);
+      voice(mf(36), t, BAR, { vol: 0.12, attack: 0.01, partials: BASSP });
+      [60, 64, 67, 72].forEach(n => voice(mf(n), t, BAR * 1.2, { vol: 0.035, attack: 0.03 }));
+      return;
+    }
+    const [bass, notes] = CH[it.chord];
+    for (let s = 0; s < 16; s++) {
+      const ts = t + s * S16;
+      if (s === 0 || s === 8) sweep(120, 48, ts, 0.13, 0.15);
+      if (s === 4 || s === 12) noiseHit(ts, 1400, 0.8, 0.05, 0.11);
+      if (s % 4 === 2) noiseHit(ts, 3000, 1.2, 0.016, 0.045);
+      if (s % 2 === 0) voice(mf(bass + ((s / 2) % 2 ? 12 : 0)), ts, S16 * 3, { vol: 0.1, attack: 0.008, partials: BASSP });
+      if (s % 4 === 2) notes.forEach(n => voice(mf(n), ts, S16 * 2.2, { vol: 0.026, attack: 0.005 }));
+    }
+    it.ev.forEach(e => { if (e.p) voice(mf(e.p), t + e.t * S16, e.d * S16 * 0.85, { vol: 0.11, attack: 0.012, partials: LEAD, dest: guide }); });
+  }
+  return { ctx, master, guide, backing, scheduleBar };
+}
+
+// ================= STATE / SETTINGS =================
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+const opts = Object.assign({ part: 0, guide: true, backing: true }, store.get('brushsong.opts', {}));
+const saveOpts = () => store.set('brushsong.opts', opts);
+
+let ac = null;
+function audio() {
+  if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+  if (ac.state === 'suspended') ac.resume();
+  return ac;
+}
+
+// ================= UI: parts + toggles =================
+function renderParts() {
+  const box = $('#parts'); box.innerHTML = '';
+  [...PART_NAMES.map((n, i) => [i, n]), ['all', 'Whole song (2 min)']].forEach(([id, label]) => {
+    const b = document.createElement('button');
+    b.textContent = label; b.className = opts.part === id ? 'sel' : '';
+    b.onclick = () => { if (playing) return; opts.part = id; saveOpts(); renderParts(); renderLyrics(); };
+    box.appendChild(b);
+  });
+}
+function renderToggles() {
+  [['#guideBtn', 'guide'], ['#backBtn', 'backing']].forEach(([sel, key]) => {
+    const b = $(sel); b.textContent = opts[key] ? 'On' : 'Off'; b.classList.toggle('sel', opts[key]);
+  });
+}
+$('#guideBtn').onclick = () => { opts.guide = !opts.guide; saveOpts(); renderToggles(); if (eng) eng.guide.gain.value = opts.guide ? 1 : 0; };
+$('#backBtn').onclick = () => { opts.backing = !opts.backing; saveOpts(); renderToggles(); if (eng) eng.backing.gain.value = opts.backing ? 1 : 0; };
+
+// ================= LYRICS =================
+let sylEls = [], lineEls = [];
+function renderLyrics() {
+  const items = timeline(opts.part), box = $('#lyrics');
+  box.innerHTML = ''; sylEls = []; lineEls = [];
+  let line = null, lastPart = -1;
+  items.forEach((it, idx) => {
+    if (it.part === undefined) return;
+    if (it.part !== lastPart) {
+      const h = document.createElement('div'); h.className = 'sec'; h.textContent = PART_NAMES[it.part] + ' · 30 s'; box.appendChild(h);
+      lastPart = it.part;
+    }
+    if (it.bar % 2 === 0) {
+      line = document.createElement('div'); line.className = 'line';
+      line.dataset.t0 = idx * BAR; line.dataset.t1 = (idx + 2) * BAR;
+      box.appendChild(line); lineEls.push(line);
+    }
+    it.ev.forEach(e => {
+      if (!e.syl) return;
+      const sp = document.createElement('span'); sp.className = 'syl';
+      const joined = e.syl.endsWith('-');
+      sp.textContent = joined ? e.syl.slice(0, -1) : e.syl + ' ';
+      sp.dataset.t0 = idx * BAR + e.t * S16; sp.dataset.t1 = idx * BAR + (e.t + e.d) * S16;
+      line.appendChild(sp); sylEls.push(sp);
+    });
+  });
+  $('#count').textContent = '';
+}
+
+// ================= PLAYBACK =================
+let eng = null, playing = false, startT = 0, items = [], nextIdx = 0, schedTimer = null, endTimer = null, onEnd = null;
+function play(cb) {
+  const ctx = audio();
+  stopPlayback(true);
+  eng = makeEngine(ctx);
+  eng.guide.gain.value = opts.guide ? 1 : 0;
+  eng.backing.gain.value = opts.backing ? 1 : 0;
+  items = timeline(opts.part); nextIdx = 0; playing = true; onEnd = cb || null;
+  startT = ctx.currentTime + 0.25;
+  const sched = () => {
+    while (nextIdx < items.length && startT + nextIdx * BAR < ctx.currentTime + 0.5) { eng.scheduleBar(items[nextIdx], startT + nextIdx * BAR); nextIdx++; }
+  };
+  sched(); schedTimer = setInterval(sched, 60);
+  endTimer = setTimeout(() => finish(), ((startT - ctx.currentTime) + items.length * BAR + 0.3) * 1000);
+  setButtons();
+  $('#stage').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  requestAnimationFrame(tickUI);
+  return startT;
+}
+function stopPlayback(silent) {
+  clearInterval(schedTimer); clearTimeout(endTimer);
+  if (eng) { const m = eng.master, t = ac.currentTime; m.gain.cancelScheduledValues(t); m.gain.setTargetAtTime(0, t, 0.03); setTimeout(() => m.disconnect(), 300); eng = null; }
+  playing = false;
+  if (!silent) { setButtons(); resetLyricMarks(); }
+}
+function finish() { const cb = onEnd; stopPlayback(); if (cb) cb(); }
+function resetLyricMarks() {
+  sylEls.forEach(s => s.classList.remove('now', 'done')); lineEls.forEach(l => l.classList.remove('now', 'past'));
+  $('#count').textContent = '';
+}
+let lastLine = null;
+function tickUI() {
+  if (!playing) return;
+  const el = ac.currentTime - startT;
+  if (el < 2 * BAR) {
+    $('#count').textContent = el < 0 ? '' : String(Math.floor(el / BEAT) % 4 + 1);
+  } else $('#count').textContent = '';
+  sylEls.forEach(s => {
+    const t0 = +s.dataset.t0, t1 = +s.dataset.t1;
+    s.classList.toggle('now', el >= t0 && el < t1);
+    s.classList.toggle('done', el >= t1);
+  });
+  let cur = null;
+  lineEls.forEach(l => {
+    const t0 = +l.dataset.t0 - 0.25, t1 = +l.dataset.t1 - 0.25;
+    const now = el >= t0 && el < t1; l.classList.toggle('now', now); l.classList.toggle('past', el >= t1);
+    if (now) cur = l;
+  });
+  if (cur && cur !== lastLine) {
+    lastLine = cur;
+    const box = $('#lyrics'); box.scrollTop = cur.offsetTop - box.offsetTop - box.clientHeight / 3;
+  }
+  requestAnimationFrame(tickUI);
+}
+
+// ================= MIC + RECORDING =================
+let stream = null, analyser = null, recorder = null, chunks = [], recStartCtx = 0, takeNo = 0, recording = false;
+async function getMic() {
+  if (stream) return stream;
+  stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+  const src = ac.createMediaStreamSource(stream);
+  analyser = ac.createAnalyser(); analyser.fftSize = 1024; src.connect(analyser);
+  const buf = new Float32Array(analyser.fftSize);
+  (function meter() {
+    analyser.getFloatTimeDomainData(buf);
+    let pk = 0; for (const v of buf) pk = Math.max(pk, Math.abs(v));
+    $('#meter').style.width = Math.min(100, pk * 140) + '%';
+    requestAnimationFrame(meter);
+  })();
+  return stream;
+}
+async function startRecording() {
+  audio();
+  try { await getMic(); }
+  catch (e) { status('Could not open the microphone: ' + e.message + '. Check the browser’s microphone permission.'); return; }
+  if (!window.MediaRecorder) { status('This browser can’t record audio. Try Safari or Chrome, or use the backing download below.'); return; }
+  const mime = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg'].find(m => MediaRecorder.isTypeSupported(m)) || '';
+  recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : {});
+  chunks = [];
+  recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+  const part = opts.part;
+  recorder.onstop = () => saveTake(part, recorder.mimeType || mime);
+  recorder.onstart = () => {
+    recStartCtx = ac.currentTime;
+    recording = true;
+    const st = play(() => { if (recorder && recorder.state === 'recording') recorder.stop(); });
+    recorder._lead = st - recStartCtx + (ac.outputLatency || ac.baseLatency || 0);
+    status('● Recording…', true);
+  };
+  recorder.start();
+}
+function saveTake(part, mime) {
+  recording = false;
+  const blob = new Blob(chunks, { type: mime || 'audio/webm' });
+  const ext = /mp4/.test(mime) ? 'm4a' : /ogg/.test(mime) ? 'ogg' : 'webm';
+  const lead = Math.max(0, recorder._lead || 0);
+  takeNo++;
+  const slug = part === 'all' ? 'whole-song' : PART_NAMES[part].toLowerCase().replace(' ', '-');
+  const name = `brush-song_${slug}_take${takeNo}_lead${Math.round(lead * 1000)}ms.${ext}`;
+  const url = URL.createObjectURL(blob);
+  const div = document.createElement('div'); div.className = 'take';
+  div.innerHTML = `<div class="meta"><b>Take ${takeNo}</b> · ${part === 'all' ? 'Whole song' : PART_NAMES[part]} · ${(blob.size / 1024).toFixed(0)} KB</div>
+    <audio controls src="${url}"></audio>
+    <div class="row"><button class="withBacking">▶ Play with backing</button><a download="${name}" href="${url}">⬇ Download</a></div>`;
+  div.querySelector('.withBacking').onclick = () => playWithBacking(part, url, lead);
+  $('#takes').prepend(div); $('#noTakes').style.display = 'none';
+  status('Saved take ' + takeNo + '. Listen back, then download it if you like it.');
+  setButtons();
+}
+let previewAudio = null;
+function playWithBacking(part, url, lead) {
+  if (playing) return;
+  const prevPart = opts.part; opts.part = part; renderParts(); renderLyrics();
+  previewAudio = new Audio(url);
+  const st = play(() => { previewAudio.pause(); });
+  previewAudio.currentTime = 0;
+  // the take's audio at time `lead` lines up with the start of the backing
+  const wait = (st - ac.currentTime - lead) * 1000;
+  setTimeout(() => previewAudio.play(), Math.max(0, wait));
+  if (wait < 0) previewAudio.currentTime = -wait / 1000;
+  status('Playing take with backing…');
+  opts.part = prevPart; saveOpts();
+}
+function status(msg, rec) { const s = $('#status'); s.textContent = msg; s.classList.toggle('recording', !!rec); }
+function setButtons() {
+  $('#practise').disabled = playing; $('#record').disabled = playing;
+  $('#stop').disabled = !playing;
+  document.querySelectorAll('#parts button').forEach(b => b.disabled = playing);
+}
+
+$('#practise').onclick = () => { status('Practising…'); play(() => status('')); };
+$('#record').onclick = startRecording;
+$('#stop').onclick = () => {
+  if (previewAudio) previewAudio.pause();
+  if (recorder && recorder.state === 'recording') recorder.stop();
+  stopPlayback(); status('Stopped.');
+};
+
+// ================= WAV BACKING EXPORT =================
+function encodeWav(buf) {
+  const ch = buf.numberOfChannels, len = buf.length, out = new DataView(new ArrayBuffer(44 + len * ch * 2));
+  const w = (o, s) => [...s].forEach((c, i) => out.setUint8(o + i, c.charCodeAt(0)));
+  w(0, 'RIFF'); out.setUint32(4, 36 + len * ch * 2, true); w(8, 'WAVEfmt '); out.setUint32(16, 16, true);
+  out.setUint16(20, 1, true); out.setUint16(22, ch, true); out.setUint32(24, buf.sampleRate, true);
+  out.setUint32(28, buf.sampleRate * ch * 2, true); out.setUint16(32, ch * 2, true); out.setUint16(34, 16, true);
+  w(36, 'data'); out.setUint32(40, len * ch * 2, true);
+  const data = [...Array(ch).keys()].map(c => buf.getChannelData(c));
+  let o = 44;
+  for (let i = 0; i < len; i++) for (let c = 0; c < ch; c++) { const v = Math.max(-1, Math.min(1, data[c][i])); out.setInt16(o, v < 0 ? v * 0x8000 : v * 0x7FFF, true); o += 2; }
+  return new Blob([out], { type: 'audio/wav' });
+}
+async function exportWav(withGuide) {
+  const its = timeline(opts.part), sr = 44100, dur = its.length * BAR + 1.5;
+  $('#wavStatus').textContent = 'Rendering… (the whole song can take up to half a minute)';
+  const octx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, Math.ceil(dur * sr), sr);
+  const e = makeEngine(octx); e.guide.gain.value = withGuide ? 1 : 0;
+  // schedule a bar at a time while rendering (keeps the audio graph small, so it renders fast)
+  const at = i => 0.1 + i * BAR;
+  e.scheduleBar(its[0], at(0)); if (its[1]) e.scheduleBar(its[1], at(1));
+  if (octx.suspend) {
+    for (let i = 2; i < its.length; i++) {
+      octx.suspend(Math.floor((at(i - 1)) * sr / 128) * 128 / sr).then(() => { e.scheduleBar(its[i], at(i)); octx.resume(); });
+    }
+  } else for (let i = 2; i < its.length; i++) e.scheduleBar(its[i], at(i));
+  const buf = await octx.startRendering();
+  // normalise so the file isn't too quiet
+  let pk = 0; for (let c = 0; c < buf.numberOfChannels; c++) for (const v of buf.getChannelData(c)) pk = Math.max(pk, Math.abs(v));
+  if (pk > 0) { const g = 0.85 / pk; for (let c = 0; c < buf.numberOfChannels; c++) { const d = buf.getChannelData(c); for (let i = 0; i < d.length; i++) d[i] *= g; } }
+  const a = document.createElement('a');
+  const slug = opts.part === 'all' ? 'whole-song' : PART_NAMES[opts.part].toLowerCase().replace(' ', '-');
+  a.href = URL.createObjectURL(encodeWav(buf)); a.download = `brush-song-backing_${slug}${withGuide ? '_guide' : ''}.wav`;
+  document.body.appendChild(a); a.click(); a.remove();
+  $('#wavStatus').textContent = 'Done. The count-in starts 0.1 s into the file.';
+}
+$('#wavGuide').onclick = () => exportWav(true);
+$('#wavPlain').onclick = () => exportWav(false);
+
+renderParts(); renderToggles(); renderLyrics(); setButtons();
+</script>
+</body>
+</html>
