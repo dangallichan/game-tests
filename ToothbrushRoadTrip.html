@@ -82,6 +82,11 @@
     background: #fff; box-shadow: 0 .8vmin 0 var(--line); font-size: clamp(26px, 6vmin, 52px);
     display: grid; place-items: center; transition: transform .2s;
   }
+  .track { position: relative; }
+  .track::after {
+    content: '♪'; position: absolute; right: -4px; top: -4px; width: 24px; height: 24px; border-radius: 50%;
+    background: var(--green); color: #fff; font-size: 15px; line-height: 24px; text-align: center; font-weight: 700;
+  }
   .track.sel { box-shadow: 0 0 0 .8vmin #fff, 0 0 0 1.6vmin var(--red); transform: scale(1.08); }
   .play, .round, .track, .bigCar { flex-shrink: 0; }
   #start { gap: 2vmin; }
@@ -563,7 +568,7 @@ const PENT = [60, 62, 64, 67, 69, 72, 74, 76, 79];
 // bpm = beats per minute; steps per bar; spb = steps per beat; swing delays the off-beat steps
 const TRACKS = {
   racing: {
-    icon: '🏎️', label: 'Racing', bpm: 144, steps: 16, spb: 4, prog: ['C', 'Am', 'F', 'G'],
+    icon: '🎸', label: 'Racing', bpm: 144, steps: 16, spb: 4, prog: ['C', 'Am', 'F', 'G'],
     mel: { vol: 0.065, attack: 0.008, partials: [[1, 1], [2, 0.4], [3, 0.2]] },
     rhythms: [[1,0,1,0,1,0,1,1,0,0,1,0,1,0,0,0], [1,0,0,1,0,0,1,0,1,0,1,0,1,0,1,0], [1,0,1,1,0,0,1,0,1,0,0,1,0,0,1,0]],
     play(s, t, ch, sd) {
@@ -575,7 +580,7 @@ const TRACKS = {
     }
   },
   roadtrip: {
-    icon: '🚙', label: 'Road trip', bpm: 132, steps: 8, spb: 2, swing: 0.24, prog: ['C', 'Am', 'F', 'G'],
+    icon: '🎷', label: 'Road trip', bpm: 132, steps: 8, spb: 2, swing: 0.24, prog: ['C', 'Am', 'F', 'G'],
     mel: { vol: 0.075, attack: 0.015, partials: [[1, 1], [2, 0.2], [3, 0.05]] },
     rhythms: [[1,0,1,1,1,0,1,0], [1,1,1,0,1,0,1,1], [1,0,1,0,1,1,1,0], [1,0,0,1,1,0,1,1]],
     play(s, t, ch, sd) {
@@ -586,7 +591,7 @@ const TRACKS = {
     }
   },
   country: {
-    icon: '🚜', label: 'Country', bpm: 128, steps: 8, spb: 2, prog: ['C', 'F', 'C', 'G'],
+    icon: '🪕', label: 'Country', bpm: 128, steps: 8, spb: 2, prog: ['C', 'F', 'C', 'G'],
     mel: { vol: 0.06, attack: 0.003, partials: [[1, 1], [2, 0.5], [3, 0.3], [4, 0.15]] },
     rhythms: [[1,1,1,0,1,1,1,0], [1,0,1,1,1,0,1,1], [1,1,1,1,1,0,1,0]],
     play(s, t, ch, sd) {
@@ -596,7 +601,7 @@ const TRACKS = {
     }
   },
   surf: {
-    icon: '🚐', label: 'Beach van', bpm: 138, steps: 16, spb: 4, prog: ['C', 'F', 'G', 'F'],
+    icon: '🏄', label: 'Beach van', bpm: 138, steps: 16, spb: 4, prog: ['C', 'F', 'G', 'F'],
     mel: { vol: 0.06, attack: 0.006, legato: true, partials: [[1, 1], [2, 0.3], [3, 0.2]] },
     rhythms: [[1,0,0,1,0,0,1,0,0,0,1,0,1,0,0,0], [1,0,1,0,1,0,1,0,0,0,0,0,1,0,1,0], [1,0,1,1,0,0,1,0,1,0,0,1,0,0,1,0]],
     play(s, t, ch, sd) {
