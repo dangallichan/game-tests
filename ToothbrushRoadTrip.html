@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <!-- code generated for D. Gallichan by Claude, date: 23/11/26 -->
-<!-- updated 24/11/26: faster brush, four car-themed soundtracks; 25/11/26: choose your car, brush handle points across the mouth -->
+<!-- updated 24/11/26: faster brush, four car-themed soundtracks; 25/11/26: choose your car, brush handle points across the mouth, roadster driver faces forwards -->
 <!-- Toothbrush Road Trip: classic toy-car version of the 2-minute toothbrush timer (ages ~3-6). Single self-contained file. -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -407,10 +407,13 @@ function drawCar(parent, type, color, spin) {
   if (T.roof) mk('path', { d: T.roof, fill: '#F7F1E3', stroke: dk, 'stroke-width': 2, 'stroke-linejoin': 'round' }, body);
   T.win.forEach(w => mk('path', { d: w, fill: '#CFEFFF', stroke: dk, 'stroke-width': 2, 'stroke-linejoin': 'round' }, body));
   if (T.driver) {
-    mk('path', { d: 'M52,-30 L59,-44', stroke: '#9FD8F5', 'stroke-width': 4, 'stroke-linecap': 'round' }, body);
-    mk('circle', { cx: 38, cy: -39, r: 7, fill: '#F5C6A0', stroke: dk, 'stroke-width': 1.5 }, body);
-    mk('path', { d: 'M30.5,-40 Q38,-51 45.5,-40 Z', fill: '#FFC93C', stroke: dk, 'stroke-width': 1.5, 'stroke-linejoin': 'round' }, body);
-    mk('path', { d: 'M38,-32 L26,-30', stroke: '#fff', 'stroke-width': 3, 'stroke-linecap': 'round' }, body);
+    // windscreen raked back towards the driver; driver faces forwards (right) with cap peak and scarf trailing behind
+    mk('path', { d: 'M62,-30 L54,-45', stroke: '#9FD8F5', 'stroke-width': 4, 'stroke-linecap': 'round' }, body);
+    mk('path', { d: 'M38,-32 L24,-28', stroke: '#fff', 'stroke-width': 3.5, 'stroke-linecap': 'round' }, body);
+    mk('circle', { cx: 39, cy: -39, r: 7, fill: '#F5C6A0', stroke: dk, 'stroke-width': 1.5 }, body);
+    mk('path', { d: 'M31.5,-40 Q36,-50 44,-43 L50,-41.5 L45,-40 Z', fill: '#FFC93C', stroke: dk, 'stroke-width': 1.5, 'stroke-linejoin': 'round' }, body);
+    mk('circle', { cx: 43, cy: -38, r: 1.4, fill: '#2B2A3A' }, body);
+    mk('path', { d: 'M41,-34.5 Q43.5,-33.5 45,-35.5', stroke: '#2B2A3A', 'stroke-width': 1.2, fill: 'none', 'stroke-linecap': 'round' }, body);
   }
   mk('path', { d: `M14,-21 L${T.wheels[1] - 20},-21`, stroke: 'rgba(255,255,255,.35)', 'stroke-width': 3, 'stroke-linecap': 'round' }, body);
   mk('circle', { cx: T.light[0], cy: T.light[1], r: 4, fill: '#FFF3B0', stroke: dk, 'stroke-width': 1.5 }, body);
