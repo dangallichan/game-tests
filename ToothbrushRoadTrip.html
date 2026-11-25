@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <!-- code generated for D. Gallichan by Claude, date: 23/11/26 -->
-<!-- updated 24/11/26: faster brush, four car-themed soundtracks -->
+<!-- updated 24/11/26: faster brush, four car-themed soundtracks; 25/11/26: choose your car, brush handle points across the mouth -->
 <!-- Toothbrush Road Trip: classic toy-car version of the 2-minute toothbrush timer (ages ~3-6). Single self-contained file. -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -85,7 +85,16 @@
   .track.sel { box-shadow: 0 0 0 .8vmin #fff, 0 0 0 1.6vmin var(--red); transform: scale(1.08); }
   .play, .round, .track, .bigCar { flex-shrink: 0; }
   #start { gap: 2vmin; }
-  #start .bigCar { width: min(50vmin, 440px); }
+  #start .bigCar { width: min(46vmin, 400px); cursor: pointer; }
+  .picker { display: flex; align-items: center; gap: 2vmin; flex-shrink: 0; }
+  .arrow {
+    width: 11vmin; height: 11vmin; min-width: 52px; min-height: 52px; border-radius: 50%; border: none; padding: 0;
+    background: #fff; box-shadow: 0 .8vmin 0 var(--line); color: var(--red); font-size: clamp(22px, 5vmin, 44px);
+    display: grid; place-items: center; flex-shrink: 0;
+  }
+  .arrow:active, #start .bigCar:active { transform: scale(.92); }
+  .carPop { animation: carPop .35s cubic-bezier(.3,1.6,.5,1) !important; }
+  @keyframes carPop { from { transform: scale(.6); } to { transform: scale(1); } }
   #start .play { width: 22vmin; height: 22vmin; }
   #start .round { width: 13vmin; height: 13vmin; }
 
@@ -203,12 +212,17 @@
 <!-- ============ START ============ -->
 <section id="start" class="screen on">
   <h1>Toothbrush <span>Road Trip</span></h1>
-  <svg class="bigCar" id="startCar" viewBox="-6 -70 132 78"></svg>
+  <div class="picker">
+    <button class="arrow" id="carPrev" aria-label="Previous car">◀</button>
+    <svg class="bigCar" id="startCar" viewBox="-6 -70 132 78" aria-label="Your car (tap to change colour)"></svg>
+    <button class="arrow" id="carNext" aria-label="Next car">▶</button>
+  </div>
   <button class="play" id="playBtn" aria-label="Start brushing">
     <svg viewBox="0 0 10 10"><path d="M1 0.5 L9.5 5 L1 9.5 Z" fill="#fff" stroke="#fff" stroke-width="1" stroke-linejoin="round"/></svg>
   </button>
   <div class="tracks" id="tracks"></div>
   <div class="btnrow">
+    <button class="round" id="paintBtn" aria-label="Change colour">🎨</button>
     <button class="round" id="garageBtn" aria-label="My garage"><svg id="garageIcon" viewBox="-6 -70 132 78"></svg><span class="badge" id="badge">0</span></button>
   </div>
 </section>
@@ -308,7 +322,7 @@
     <button class="wide warn" id="mStop">Stop brushing (no car)</button>
     <button class="wide" id="mClear">Clear garage</button>
     <button class="wide primary" id="mClose">Done</button>
-    <p class="note">The time is split into four equal parts: top left, top right, bottom right, bottom left. The car reaches a chequered flag (with a toot and a chime) each time it's time to move on, and the arrow shows where. Children pick a soundtrack (racing, road trip, country or beach van) with the round music buttons on the start screen; tapping one plays a short preview. Each finished brush parks a new car in the garage, saved on this device only. The screen is kept awake while brushing where the browser allows it.</p>
+    <p class="note">The time is split into four equal parts: top left, top right, bottom right, bottom left. The car reaches a chequered flag (with a toot and a chime) each time it's time to move on, and the arrow shows where. Children pick a soundtrack (racing, road trip, country or beach van) with the round music buttons on the start screen; tapping one plays a short preview. Children choose their car on the start screen (arrows change the car; the 🎨 button or tapping the car changes its colour). Each finished brush parks that car in the garage, saved on this device only. The screen is kept awake while brushing where the browser allows it.</p>
   </div>
 </div>
 
@@ -801,7 +815,7 @@ function placeBrush(zi, instant) {
   const z = ZONES[zi], bp = $('#brushPos');
   const cy = z.up ? z.box.y + z.box.h - 4 : z.box.y + 4;
   if (instant) { bp.style.transition = 'none'; requestAnimationFrame(() => requestAnimationFrame(() => bp.style.transition = '')); }
-  bp.style.transform = `translate(${z.cx}px, ${cy}px) scale(${z.left ? -1 : 1}, ${z.up ? 1 : -1})`;
+  bp.style.transform = `translate(${z.cx}px, ${cy}px) scale(${z.left ? 1 : -1}, ${z.up ? 1 : -1})`;
 }
 
 let arrowTimer = null;
@@ -831,7 +845,17 @@ function completeZone(zi, quiet) {
 
 // ================= RUN LOOP =================
 let run = null, tickTimer = null, cdTimer = null;
-let nextCar = randomCar();
+const CAR_TYPE_LIST = Object.keys(CAR_TYPES);
+let nextCar = store.get('crt.car', null);
+if (!nextCar || !CAR_TYPES[nextCar.type] || !CAR_COLOURS.includes(nextCar.color)) nextCar = randomCar();
+function chooseCar(change) {
+  if (change.type !== undefined) nextCar = { ...nextCar, type: CAR_TYPE_LIST[(CAR_TYPE_LIST.indexOf(nextCar.type) + change.type + CAR_TYPE_LIST.length) % CAR_TYPE_LIST.length] };
+  if (change.color) nextCar = { ...nextCar, color: CAR_COLOURS[(CAR_COLOURS.indexOf(nextCar.color) + 1) % CAR_COLOURS.length] };
+  store.set('crt.car', nextCar);
+  paintCar('#startCar', nextCar);
+  const sc = $('#startCar'); sc.classList.remove('carPop'); void sc.getBoundingClientRect(); sc.classList.add('carPop');
+  ensureAudio(); if (ac) horn(ac.currentTime);
+}
 
 function startBrushing() {
   ensureAudio();
@@ -911,7 +935,6 @@ function finish() {
     paintCar('#doneCar', car);
     show('done');
     confetti();
-    nextCar = randomCar();
     paintCar('#startCar', nextCar);
   }, 1700);
 }
@@ -1062,6 +1085,10 @@ function renderTracks() {
   });
 }
 renderTracks();
+$('#carPrev').onclick = () => chooseCar({ type: -1 });
+$('#carNext').onclick = () => chooseCar({ type: 1 });
+$('#startCar').onclick = () => chooseCar({ color: true });
+$('#paintBtn').onclick = () => chooseCar({ color: true });
 paintCar('#startCar', nextCar);
 paintCar('#garageIcon', { type: 'mini', color: '#D7263D' });
 paintCar('#garageIcon2', { type: 'mini', color: '#D7263D' });
