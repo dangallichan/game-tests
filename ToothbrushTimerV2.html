@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- code generated for D. Gallichan by Claude, date: 24/11/26 (26/11/26: random scenes, turquoise bugs, final 10 s countdown with pips) -->
+<!-- code generated for D. Gallichan by Claude, date: 24/11/26 (26/11/26: random scenes, turquoise bugs, final 10 s countdown with pips; choose your unicorn, who walks a rainbow while you brush) -->
 <!-- Sugar Bug Rescue 2: unicorn & rainbow-heart version of the 2-minute toothbrush timer (ages ~3-6), with four soundtracks. Single self-contained file. -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -127,10 +127,6 @@
   #bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
   .rainbow { position: absolute; }
   .floatHeart { position: absolute; bottom: -12vmin; opacity: .55; animation: floatUp linear infinite; }
-  #unicorn { position: absolute; bottom: calc(max(4px, env(safe-area-inset-bottom)) + 30px); width: 30vmin; height: 27vmin; min-width: 90px; min-height: 81px;
-             animation: prance 1.1s ease-in-out infinite; transform-origin: 50% 100%;
-             --m1: #FF5E7E; --m2: #FFA94D; --m3: #FFE066; --m4: #7ED957; --m5: #5EB8FF; --m6: #B07CFF; --ub: #fff; --hoof: #C9A7FF; }
-  .uniLeft .mini { left: auto; right: 1vmin; }
   #final {
     position: absolute; left: 0; right: 0; top: 0; text-align: center; pointer-events: none; display: none;
     font-size: min(24vmin, 210px); font-weight: 700; line-height: 1; color: #40E0D0;
@@ -138,8 +134,33 @@
   }
   #final.on { display: block; }
   #final.bump { animation: bump .45s cubic-bezier(.3,1.6,.5,1); }
-  #unicorn.hop { animation: hop .7s ease-out; }
   .heroWrap { position: relative; display: grid; place-items: center; }
+  .picker { display: flex; align-items: center; gap: 2vmin; flex-shrink: 0; }
+  .arrow {
+    width: 11vmin; height: 11vmin; min-width: 52px; min-height: 52px; border-radius: 50%; border: none; padding: 0;
+    background: #fff; box-shadow: 0 .8vmin 0 #E2CFF5; color: var(--coral); font-size: clamp(22px, 5vmin, 44px);
+    display: grid; place-items: center; flex-shrink: 0; cursor: pointer;
+  }
+  .arrow:active { transform: scale(.92); }
+  .uniPick { position: relative; width: 36vmin; height: 32.4vmin; cursor: pointer; animation: bounce 1.4s ease-in-out infinite; filter: drop-shadow(0 1vmin 0 rgba(176,124,255,.25)); }
+  .uniDone { width: 34vmin; height: 30.6vmin; min-width: 150px; min-height: 135px; animation: bounce 1.2s ease-in-out infinite; }
+  .uniPop { animation: uniPop .35s cubic-bezier(.3,1.6,.5,1) !important; }
+  @keyframes uniPop { from { transform: scale(.6); } to { transform: scale(1); } }
+  #walk { width: min(98vw, 1000px); height: auto; max-height: 21vh; flex-shrink: 0; overflow: visible; }
+  #walkerPos { transition: transform .15s linear; }
+  .walking #walkerBob { animation: walkbob .45s ease-in-out infinite alternate; }
+  .walking .leg { animation: step .45s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 6%; }
+  .walking .legB { animation-direction: alternate-reverse; }
+  .walking .tail { animation: swish .9s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 100% 0; }
+  #walkerBob.hop { animation: walkhop .7s ease-out; }
+  .wh path { fill: #fff; stroke: #E2CFF5; stroke-width: 7; transition: fill .3s; }
+  .wh.got path { fill: url(#rainbowV); stroke: #fff; }
+  .wh.got { animation: whpop .6s cubic-bezier(.3,1.6,.5,1); transform-box: fill-box; transform-origin: center; }
+  @keyframes walkbob { from { transform: translateY(0); } to { transform: translateY(-6px); } }
+  @keyframes step { from { transform: rotate(16deg); } to { transform: rotate(-16deg); } }
+  @keyframes swish { from { transform: rotate(-8deg); } to { transform: rotate(8deg); } }
+  @keyframes walkhop { 0% { transform: translateY(0); } 40% { transform: translateY(-70px) rotate(-6deg); } 100% { transform: translateY(0); } }
+  @keyframes whpop { 0% { transform: scale(.4); } 60% { transform: scale(1.3); } 100% { transform: scale(1); } }
   .heroWrap .bigHeart { position: absolute; width: 46vmin; height: 42vmin; animation: pulse 2.2s ease-in-out infinite; }
   .heroWrap .mascot { position: relative; }
   .tracks { display: flex; gap: 3vmin; }
@@ -153,6 +174,7 @@
   #start { gap: 2vmin; }
   #start .mascot { width: 28vmin; height: 31vmin; }
   #start .heroWrap .bigHeart { width: 40vmin; height: 36vmin; }
+  #start .picker .uniPick { width: 34vmin; height: 30.6vmin; }
   #start .play { width: 22vmin; height: 22vmin; }
   #start .round { width: 13vmin; height: 13vmin; }
   .track { width: 11.5vmin; height: 11.5vmin; }
@@ -254,18 +276,17 @@
       <path d="M18,22 C18,15 23,11 29,11" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" opacity=".7"/>
     </symbol>
     <symbol id="unicornArt" viewBox="0 0 200 180">
-      <g stroke-linecap="round" fill="none" stroke-width="9">
+      <g class="tail" stroke-linecap="round" fill="none" stroke-width="9">
         <path d="M47,82 C22,74 12,100 24,124" style="stroke:var(--m1)"/>
         <path d="M47,88 C28,84 20,104 30,126" style="stroke:var(--m2)"/>
         <path d="M48,94 C34,94 28,108 36,127" style="stroke:var(--m4)"/>
         <path d="M50,100 C40,102 36,114 42,128" style="stroke:var(--m5)"/>
         <path d="M52,106 C46,110 46,118 48,128" style="stroke:var(--m6)"/>
       </g>
-      <g style="fill:var(--ub)" stroke="#D9C6EE" stroke-width="3">
-        <rect x="60" y="108" width="14" height="52" rx="7"/><rect x="80" y="110" width="14" height="50" rx="7"/>
-        <rect x="118" y="110" width="14" height="50" rx="7"/><rect x="138" y="108" width="14" height="52" rx="7"/>
-      </g>
-      <g style="fill:var(--hoof)"><rect x="60" y="150" width="14" height="10" rx="4"/><rect x="80" y="150" width="14" height="10" rx="4"/><rect x="118" y="150" width="14" height="10" rx="4"/><rect x="138" y="150" width="14" height="10" rx="4"/></g>
+      <g class="leg legA"><rect x="60" y="108" width="14" height="52" rx="7" style="fill:var(--ub)" stroke="#D9C6EE" stroke-width="3"/><rect x="60" y="150" width="14" height="10" rx="4" style="fill:var(--hoof)"/></g>
+      <g class="leg legB"><rect x="80" y="110" width="14" height="50" rx="7" style="fill:var(--ub)" stroke="#D9C6EE" stroke-width="3"/><rect x="80" y="150" width="14" height="10" rx="4" style="fill:var(--hoof)"/></g>
+      <g class="leg legB"><rect x="118" y="110" width="14" height="50" rx="7" style="fill:var(--ub)" stroke="#D9C6EE" stroke-width="3"/><rect x="118" y="150" width="14" height="10" rx="4" style="fill:var(--hoof)"/></g>
+      <g class="leg legA"><rect x="138" y="108" width="14" height="52" rx="7" style="fill:var(--ub)" stroke="#D9C6EE" stroke-width="3"/><rect x="138" y="150" width="14" height="10" rx="4" style="fill:var(--hoof)"/></g>
       <ellipse cx="104" cy="98" rx="56" ry="33" style="fill:var(--ub)" stroke="#D9C6EE" stroke-width="3"/>
       <path d="M128,92 C134,72 140,60 150,50 L172,62 C162,74 156,90 154,104 Z" style="fill:var(--ub)" stroke="#D9C6EE" stroke-width="3" stroke-linejoin="round"/>
       <ellipse cx="104" cy="98" rx="50" ry="27" style="fill:var(--ub)"/>
@@ -275,8 +296,8 @@
       </g>
       <ellipse cx="183" cy="67" rx="13" ry="11" fill="#FFE3F0" stroke="#D9C6EE" stroke-width="3"/>
       <circle cx="186" cy="66" r="2" fill="#E0A3C0"/>
-      <path d="M163,36 L178,6 L172,39 Z" fill="#FFD36B" stroke="#E0A100" stroke-width="2.5" stroke-linejoin="round"/>
-      <path d="M166,30 L174,27 M168,22 L175,19 M171,14 L176,12" stroke="#E0A100" stroke-width="2" stroke-linecap="round"/>
+      <path d="M163,36 L178,6 L172,39 Z" style="fill:var(--horn);stroke:var(--hornEdge)" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M166,30 L174,27 M168,22 L175,19 M171,14 L176,12" style="stroke:var(--hornEdge)" stroke-width="2" stroke-linecap="round"/>
       <circle cx="150" cy="36" r="9" style="fill:var(--m1)"/><circle cx="143" cy="47" r="9" style="fill:var(--m2)"/>
       <circle cx="138" cy="59" r="9" style="fill:var(--m3)"/><circle cx="134" cy="71" r="9" style="fill:var(--m4)"/>
       <circle cx="131" cy="83" r="9" style="fill:var(--m5)"/><circle cx="157" cy="30" r="7" style="fill:var(--m6)"/>
@@ -302,21 +323,25 @@
 <div id="bg">
   <div id="rainbows"></div>
   <div id="hearts"></div>
-  <svg id="unicorn" viewBox="0 0 200 180"><g transform="translate(200,0) scale(-1,1)"><use href="#unicornArt"/></g></svg>
 </div>
 
 <!-- ============ START ============ -->
 <section id="start" class="screen on">
   <h1>Sugar Bug <span>Rescue!</span></h1>
-  <div class="heroWrap">
-    <svg class="bigHeart" viewBox="-4 -4 108 98"><use href="#rheart"/></svg>
-    <svg class="mascot" viewBox="0 0 100 110"><use href="#toothy"/></svg>
+  <div class="picker">
+    <button class="arrow" id="uniPrev" aria-label="Previous unicorn">◀</button>
+    <div class="heroWrap">
+      <svg class="bigHeart" viewBox="-4 -4 108 98"><use href="#rheart"/></svg>
+      <svg class="uniPick" id="uniPick" viewBox="0 0 200 180" aria-label="Your unicorn (tap to change colour)"><use href="#unicornArt"/></svg>
+    </div>
+    <button class="arrow" id="uniNext" aria-label="Next unicorn">▶</button>
   </div>
   <button class="play" id="playBtn" aria-label="Start brushing">
     <svg viewBox="0 0 10 10"><path d="M1 0.5 L9.5 5 L1 9.5 Z" fill="#fff" stroke="#fff" stroke-width="1" stroke-linejoin="round"/></svg>
   </button>
   <div class="tracks" id="tracks"></div>
   <div class="btnrow">
+    <button class="round" id="paintBtn" aria-label="Change colour">🎨</button>
     <button class="round" id="chartBtn" aria-label="Sticker chart">📒<span class="badge" id="badge">0</span></button>
   </div>
 </section>
@@ -359,7 +384,11 @@
     <div id="final"></div>
     <svg class="mini" viewBox="0 0 100 110"><use href="#toothy"/></svg>
   </div>
-  <div class="bar"><div id="prog"></div></div>
+  <svg id="walk" viewBox="0 0 800 178" aria-label="Unicorn walking along a rainbow">
+    <g id="walkBow"></g>
+    <g id="walkHearts"></g>
+    <g id="walkerPos"><g id="walkerBob"><g id="walker" transform="translate(-100,-160)"></g></g></g>
+  </svg>
   <div id="timeLabel"></div>
 </section>
 
@@ -367,7 +396,7 @@
 <section id="done" class="screen">
   <h1>Sparkly <span>clean!</span></h1>
   <div class="doneRow">
-    <div class="shine"><svg class="mascot big" viewBox="0 0 100 110"><use href="#toothy"/></svg></div>
+    <div class="shine"><svg class="uniDone" id="uniDone" viewBox="0 0 200 180"><use href="#unicornArt"/></svg></div>
     <div class="sticker" id="doneStickerBox"><svg viewBox="-4 -4 108 98"><use href="#rheart"/></svg><span id="doneSticker">⭐</span></div>
   </div>
   <div class="btnrow">
@@ -399,7 +428,7 @@
     <button class="wide warn" id="mStop">Stop brushing (no sticker)</button>
     <button class="wide" id="mClear">Clear sticker chart</button>
     <button class="wide primary" id="mClose">Done</button>
-    <p class="note">The time is split into four equal parts: top left, top right, bottom right, bottom left. A chime and an arrow show when to move on. Children pick a soundtrack (pop, disco, unicorn gallop or island) with the round music buttons on the start screen; tapping one plays a short preview. Stickers are saved on this device only. The screen is kept awake while brushing where the browser allows it.</p>
+    <p class="note">The time is split into four equal parts: top left, top right, bottom right, bottom left. A chime and an arrow show when to move on. Children pick a soundtrack (pop, disco, unicorn gallop or island) with the round music buttons on the start screen; tapping one plays a short preview. They choose a unicorn with the arrows (🎨 or tapping it changes its colour); it walks along the rainbow at the bottom while they brush. Stickers are saved on this device only. The screen is kept awake while brushing where the browser allows it.</p>
   </div>
 </div>
 
@@ -724,7 +753,7 @@ function resetMouth() {
   $('#hl').classList.remove('on');
   $('#brushPos').classList.remove('on');
   $('#arrowPos').classList.remove('on');
-  $('#prog').style.width = '0';
+  setWalker(0, true);
   $('#timeLabel').textContent = '';
   const stars = $('#stars'); stars.innerHTML = '';
   for (let i = 0; i < 4; i++) {
@@ -756,8 +785,7 @@ function setActiveZone(zi) {
   clearTimeout(arrowTimer);
   arrowTimer = setTimeout(() => ap.classList.remove('on'), 2800);
   document.querySelectorAll('.star').forEach((s, i) => s.classList.toggle('now', i === zi));
-  const u = $('#unicorn'); u.classList.remove('hop'); void u.getBoundingClientRect(); u.classList.add('hop');
-  setTimeout(() => u.classList.remove('hop'), 750);
+  hopWalker();
 }
 
 function completeZone(zi, quiet) {
@@ -768,6 +796,7 @@ function completeZone(zi, quiet) {
   z.teeth.forEach(t => { t.grime.style.opacity = 0; t.spark.classList.add('on'); });
   const st = document.querySelectorAll('.star')[zi];
   st.classList.remove('now'); st.classList.add('got');
+  const wh = document.querySelectorAll('#walkHearts .wh')[zi]; if (wh) wh.classList.add('got');
   if (!quiet) sfx.chime();
 }
 
@@ -783,6 +812,7 @@ function startBrushing() {
   countdown(() => {
     run = { start: performance.now(), T: settings.duration * 1000, zone: -1, done: false };
     music.start(settings.track);
+    $('#walk').classList.add('walking');
     tick();
     tickTimer = setInterval(tick, 100);
   });
@@ -817,7 +847,7 @@ function tick() {
   const bugs = ZONES[zone].bugs;
   bugs.forEach((b, j) => { if (!b.popped && zt >= (j + 1) / (bugs.length + 1)) popBug(b); });
   ZONES[zone].teeth.forEach(tt => tt.grime.style.opacity = Math.max(0, 1 - zt / 0.9));
-  $('#prog').style.width = (100 * t / run.T).toFixed(1) + '%';
+  setWalker(t / run.T);
   const rem = Math.ceil((run.T - t) / 1000);
   $('#timeLabel').textContent = Math.floor(rem / 60) + ':' + String(rem % 60).padStart(2, '0');
   const remain = run.T - t;
@@ -854,7 +884,7 @@ function finish() {
   $('#final').classList.remove('on');
   setTimeout(() => sfx.fanfare(), 550);
   releaseWake();
-  $('#prog').style.width = '100%';
+  setWalker(1); $('#walk').classList.remove('walking'); setTimeout(hopWalker, 300);
   $('#timeLabel').textContent = '0:00';
   $('#hl').classList.remove('on');
   $('#brushPos').classList.remove('on');
@@ -869,6 +899,7 @@ function finish() {
 }
 
 function stopBrushing() {
+  $('#walk').classList.remove('walking');
   clearTimeout(cdTimer); clearInterval(tickTimer);
   stopPips();
   $('#count').classList.remove('on');
@@ -1055,16 +1086,6 @@ function newScene() {
   const sc = pick(SCENES);
   document.documentElement.style.setProperty('--paper', sc[0]);
   document.documentElement.style.setProperty('--glow', sc[1]);
-  // unicorn: which side, how big, what colours
-  const uni = $('#unicorn'), left = Math.random() < 0.5, size = rnd(22, 36);
-  uni.style.width = size + 'vmin'; uni.style.height = size * 0.9 + 'vmin';
-  uni.style.left = left ? rnd(0, 6) + 'vmin' : 'auto'; uni.style.right = left ? 'auto' : rnd(0, 6) + 'vmin';
-  uni.querySelector('g').setAttribute('transform', left ? '' : 'translate(200,0) scale(-1,1)');
-  const mane = pick(MANES);
-  mane.forEach((c, i) => uni.style.setProperty('--m' + (i + 1), c));
-  uni.style.setProperty('--ub', pick(BODIES)); uni.style.setProperty('--hoof', pick(HOOVES));
-  uni.style.animationDuration = rnd(0.9, 1.4).toFixed(2) + 's';
-  $('#brush').classList.toggle('uniLeft', left);
   // one or two rainbows, in different corners from each other
   const box = $('#rainbows'); box.innerHTML = '';
   const corners = [['top', 'left'], ['top', 'right'], ['bottom', 'left'], ['bottom', 'right']].sort(() => Math.random() - 0.5);
@@ -1092,6 +1113,73 @@ function newScene() {
   rects[0].setAttribute('fill', bc); rects[0].setAttribute('stroke', bd); rects[1].setAttribute('fill', bc); rects[2].setAttribute('stroke', bd);
 }
 newScene();
+
+// ---------- choose your unicorn ----------
+const UNICORNS = [ // mane (6), body, hooves, horn, horn edge
+  [['#FF5E7E', '#FFA94D', '#FFE066', '#7ED957', '#5EB8FF', '#B07CFF'], '#FFFFFF', '#C9A7FF', '#FFD36B', '#E0A100'],
+  [['#40E0D0', '#2EC4B6', '#7FFFD4', '#5EB8FF', '#B07CFF', '#FF8FB1'], '#FFFFFF', '#40E0D0', '#FFD36B', '#E0A100'],
+  [['#1A9E92', '#40E0D0', '#5CE1E6', '#7FDBFF', '#A0C4FF', '#C9A7FF'], '#E6FFFB', '#2EC4B6', '#EEF2F6', '#9AA4AE'],
+  [['#FF5FA2', '#FF8FB1', '#C9A7FF', '#B07CFF', '#FFB3C6', '#FFD6E8'], '#FFF0F8', '#FF8FB1', '#FFD36B', '#E0A100'],
+  [['#FFB3C6', '#FFD6A5', '#FDFFB6', '#B8F2E6', '#9BF6FF', '#BDB2FF'], '#F3ECFF', '#BDB2FF', '#FFE3F0', '#E0A3C0'],
+  [['#FF9F43', '#FFC93C', '#FF5E7E', '#FFE066', '#FF8FB1', '#FFA94D'], '#FFF8E6', '#FFC93C', '#FFFFFF', '#E0A100'],
+  [['#7FFFD4', '#40E0D0', '#FFE066', '#B8F2E6', '#2EC4B6', '#FF8FB1'], '#EEFFF6', '#7FD9B9', '#FFD36B', '#E0A100'],
+  [['#5EB8FF', '#7B6BD6', '#B07CFF', '#40E0D0', '#C9A7FF', '#A0C4FF'], '#E8EEFF', '#7B6BD6', '#EEF2F6', '#9AA4AE']
+];
+const UNI_BODIES = ['#FFFFFF', '#FFF0F8', '#F3ECFF', '#E6FFFB', '#9FEDE3', '#FFD6E8', '#FFF8E6', '#E8EEFF', '#B8F2E6'];
+let myUni = Object.assign({ i: 1, body: null }, store.get('sbr2.unicorn', {}));
+if (!UNICORNS[myUni.i]) myUni.i = 1;
+function paintUnicorn(el) {
+  const [mane, body, hoof, horn, edge] = UNICORNS[myUni.i];
+  mane.forEach((c, k) => el.style.setProperty('--m' + (k + 1), c));
+  el.style.setProperty('--ub', myUni.body || body); el.style.setProperty('--hoof', hoof);
+  el.style.setProperty('--horn', horn); el.style.setProperty('--hornEdge', edge);
+}
+function paintAllUnicorns() { ['#uniPick', '#uniDone', '#walker'].forEach(id => paintUnicorn($(id))); }
+function chooseUnicorn(change) {
+  if (change.step) { myUni.i = (myUni.i + change.step + UNICORNS.length) % UNICORNS.length; myUni.body = null; }
+  if (change.paint) {
+    const cur = myUni.body || UNICORNS[myUni.i][1];
+    myUni.body = UNI_BODIES[(UNI_BODIES.indexOf(cur) + 1) % UNI_BODIES.length];
+  }
+  store.set('sbr2.unicorn', myUni);
+  paintAllUnicorns();
+  const u = $('#uniPick'); u.classList.remove('uniPop'); void u.getBoundingClientRect(); u.classList.add('uniPop');
+  ensureAudio(); if (ac) { const t = ac.currentTime; [784, 988, 1175].forEach((f, k) => voice(f, t + k * 0.07, 0.4, { vol: 0.07, partials: BELL })); }
+}
+$('#uniPrev').onclick = () => chooseUnicorn({ step: -1 });
+$('#uniNext').onclick = () => chooseUnicorn({ step: 1 });
+$('#paintBtn').onclick = () => chooseUnicorn({ paint: true });
+$('#uniPick').onclick = () => chooseUnicorn({ paint: true });
+
+// ---------- the rainbow walk ----------
+// rainbow bands follow y = 118 - 100 s(1-s) (top band), x = 20 + 760 s
+const WALK_Y = s => 118 - 100 * s * (1 - s), WALK_X = s => 20 + 760 * s;
+(function buildWalk() {
+  const bow = $('#walkBow');
+  ['#FF5E7E', '#FFA94D', '#FFE066', '#40E0D0', '#5EB8FF', '#B07CFF'].forEach((c, i) =>
+    mk('path', { d: `M20,${118 + 9 * i} Q400,${68 + 9 * i} 780,${118 + 9 * i}`, stroke: c, 'stroke-width': 10, fill: 'none', 'stroke-linecap': 'round' }, bow));
+  [[20, 160], [780, 160]].forEach(([x, y]) => {
+    const g = mk('g', { fill: '#fff' }, bow);
+    mk('ellipse', { cx: x, cy: y - 6, rx: 34, ry: 16 }, g); mk('ellipse', { cx: x + 20, cy: y, rx: 24, ry: 13 }, g); mk('ellipse', { cx: x - 20, cy: y, rx: 22, ry: 12 }, g);
+  });
+  const hs = $('#walkHearts');
+  [0.25, 0.5, 0.75, 1].forEach(q => {
+    const s = 0.04 + 0.92 * q, g = mk('g', { class: 'wh', transform: `translate(${WALK_X(s) - 15},${WALK_Y(s) - 32}) scale(.3)` }, hs);
+    mk('path', { d: 'M50,85 C20,62 2,45 2,26 C2,12 13,2 27,2 C38,2 46,9 50,17 C54,9 62,2 73,2 C87,2 98,12 98,26 C98,45 80,62 50,85 Z' }, g);
+  });
+  const w = $('#walker'), sym = document.getElementById('unicornArt');
+  [...sym.childNodes].forEach(n => w.appendChild(n.cloneNode(true)));
+})();
+function setWalker(p, instant) {
+  const s = 0.04 + 0.92 * Math.max(0, Math.min(1, p)), x = WALK_X(s), y = WALK_Y(s) - 5;
+  const ang = Math.atan2(-100 + 200 * s, 760) * 180 / Math.PI;
+  const el = $('#walkerPos');
+  if (instant) { el.style.transition = 'none'; requestAnimationFrame(() => requestAnimationFrame(() => el.style.transition = '')); document.querySelectorAll('#walkHearts .wh').forEach(h => h.classList.remove('got')); }
+  el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${ang.toFixed(1)}deg) scale(.52)`;
+}
+function hopWalker() { const b = $('#walkerBob'); b.classList.remove('hop'); void b.getBoundingClientRect(); b.classList.add('hop'); setTimeout(() => b.classList.remove('hop'), 750); }
+paintAllUnicorns();
+setWalker(0, true);
 renderTracks();
 updateBadge();
 </script>
